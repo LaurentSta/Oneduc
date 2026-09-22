@@ -29,7 +29,7 @@ Ces points doivent être corrigés AVANT de publier. Publier avec ces failles ex
   Corrigé le 5 juillet 2026 : migration ajoutant `last_session_time` à `scorm_scores` (même type que `content_block_scorm_scores`).
 
 - [x] **S7** — Ajouter la vérification d'appartenance à la leçon dans `POST /scorm/save-progress`
-  Corrigé le 5 juillet 2026 : `User::aAccesAuModule()` appliqué dans `SCORMController`, `ContentBlockScormController` et `EvaluationSCORMController` (403 sinon), middleware `auth` ajouté sur les 3 routes (CSRF reste désactivé pour l'iframe).
+  Corrigé le 5 juillet 2026 : `User::aAccesAuModule()` appliqué dans `SCORMController`, `ContentBlockScormController` et `EvaluationSCORMController` (403 sinon), middleware `auth` ajouté sur les 3 routes. Complété le 22 septembre 2026 : protection CSRF rétablie après transmission du jeton par les wrappers de même origine, voir [Préparation du déploiement](19-securite-deploiement.md).
 
 - [x] **S8** — Corriger la page publique `/inscription`
   Corrigé le 5 juillet 2026 : redirection 301 vers `/inscription-formateur` (seul parcours d'inscription fonctionnel).

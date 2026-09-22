@@ -1,5 +1,11 @@
 <?php
 
+use App\Http\Middleware\EnsureAssociationMembership;
+use App\Http\Middleware\EntetesSecurite;
+use App\Http\Middleware\ForcePasswordChange;
+use App\Http\Middleware\RecordAdminActivity;
+use App\Http\Middleware\Role;
+use App\Http\Middleware\TrackSessionTime;
 use Illuminate\Foundation\Application;
 use Illuminate\Foundation\Configuration\Exceptions;
 use Illuminate\Foundation\Configuration\Middleware;
@@ -11,12 +17,14 @@ return Application::configure(basePath: dirname(__DIR__))
         health: '/up',
     )
     ->withMiddleware(function (Middleware $middleware) {
+        $middleware->append(EntetesSecurite::class);
+
         $middleware->alias([
-            'role' => \App\Http\Middleware\Role::class,
-            'track.time' => \App\Http\Middleware\TrackSessionTime::class,
-            'force.password.change' => \App\Http\Middleware\ForcePasswordChange::class,
-            'admin.activity' => \App\Http\Middleware\RecordAdminActivity::class,
-            'association.member' => \App\Http\Middleware\EnsureAssociationMembership::class,
+            'role' => Role::class,
+            'track.time' => TrackSessionTime::class,
+            'force.password.change' => ForcePasswordChange::class,
+            'admin.activity' => RecordAdminActivity::class,
+            'association.member' => EnsureAssociationMembership::class,
         ]);
     })
     ->withExceptions(function (Exceptions $exceptions) {

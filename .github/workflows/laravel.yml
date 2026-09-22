@@ -2,14 +2,22 @@ name: Laravel CI
 
 on:
   push:
-    branches: [ "main" ]
+    branches: ["main"]
   pull_request:
-    branches: [ "main" ]
+    branches: ["main"]
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: ci-${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
 
 jobs:
   laravel-tests:
     runs-on: ubuntu-latest
-
+    timeout-minutes: 20
     services:
       mysql:
         image: mysql:8.0
@@ -23,37 +31,89 @@ jobs:
           --health-interval=10s
           --health-timeout=5s
           --health-retries=10
-
     env:
+      APP_ENV: testing
       DB_CONNECTION: mysql
       DB_HOST: 127.0.0.1
       DB_PORT: 3306
       DB_DATABASE: oneduc_ci
       DB_USERNAME: root
       DB_PASSWORD: root
-
     steps:
-      - name: Checkout
-        uses: actions/checkout@v4
-
-      - name: Setup PHP
-        uses: shivammathur/setup-php@v2
+      - uses: actions/checkout@34e114876b0b11c390a56381ad16ebd13914f8d5 # v4.3.1
+        with:
+          persist-credentials: false
+      - uses: shivammathur/setup-php@bf6b4fbd49ca58e4608c9c89fba0b8d90bd2a39f # 2.35.5
         with:
           php-version: "8.3"
-          extensions: mbstring, dom, fileinfo, pdo_mysql
+          extensions: mbstring, dom, fileinfo, pdo_mysql, gd, zip, intl, bcmath
           coverage: none
-
-      - name: Copy environment file
-        run: php -r "file_exists('.env') || copy('.env.example', '.env');"
-
+      - name: Prepare environment
+        run: cp .env.example .env
       - name: Install PHP dependencies
-        run: composer install --no-ansi --no-interaction --no-scripts --no-progress --prefer-dist
-
-      - name: Generate app key
+        run: composer install --no-interaction --no-progress --prefer-dist
+      - name: Generate ephemeral app key
         run: php artisan key:generate
-
       - name: Run migrations
         run: php artisan migrate --force
-
       - name: Execute tests
         run: php artisan test
+
+  qualite-php:
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    env:
+      APP_ENV: testing
+      DB_CONNECTION: sqlite
+      DB_DATABASE: ":memory:"
+      CACHE_STORE: array
+    steps:
+      - uses: actions/checkout@34e114876b0b11c390a56381ad16ebd13914f8d5 # v4.3.1
+        with:
+          fetch-depth: 0
+          persist-credentials: false
+      - uses: shivammathur/setup-php@bf6b4fbd49ca58e4608c9c89fba0b8d90bd2a39f # 2.35.5
+        with:
+          php-version: "8.3"
+          extensions: mbstring, dom, fileinfo, pdo_sqlite, gd, zip, intl, bcmath
+          coverage: none
+      - run: composer validate --strict
+      - run: composer audit --locked --no-interaction
+      - run: cp .env.example .env
+      - name: Install PHP dependencies
+        id: dependencies
+        run: composer install --no-interaction --no-progress --prefer-dist
+      - run: composer analyse
+      - name: Check formatting of changed PHP files
+        if: ${{ !cancelled() && steps.dependencies.outcome == 'success' }}
+        env:
+          BASE_SHA: ${{ github.event.pull_request.base.sha || github.event.before }}
+        run: |
+          if [ -z "$BASE_SHA" ] || ! git cat-file -e "$BASE_SHA^{commit}" 2>/dev/null; then
+            BASE_SHA=HEAD^
+          fi
+          git diff --name-only -z --diff-filter=ACM "$BASE_SHA" HEAD -- '*.php' |
+            xargs -0 -r vendor/bin/pint --test
+
+  frontend:
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@34e114876b0b11c390a56381ad16ebd13914f8d5 # v4.3.1
+        with:
+          persist-credentials: false
+      - uses: actions/setup-node@49933ea5288caeca8642d1e84afbd3f7d6820020 # v4.4.0
+        with:
+          node-version: "22"
+          cache: npm
+      - run: npm ci
+      - run: npm audit --audit-level=moderate
+      - run: node --test tests/JavaScript/*.test.js
+      - run: npm run build
+      - name: Archive frontend build for review
+        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4.6.2
+        with:
+          name: frontend-${{ github.sha }}
+          path: public/build/
+          if-no-files-found: error
+          retention-days: 7

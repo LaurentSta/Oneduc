@@ -835,36 +835,6 @@ parameters:
 			path: app/Http/Controllers/Formateur/LiveQuizSessionController.php
 
 		-
-			message: '#^Access to an undefined property Illuminate\\Database\\Eloquent\\Model\:\:\$id\.$#'
-			identifier: property.notFound
-			count: 1
-			path: app/Http/Controllers/Formateur/MesFormationsController.php
-
-		-
-			message: '#^Access to an undefined property Illuminate\\Database\\Eloquent\\Model\:\:\$module_title\.$#'
-			identifier: property.notFound
-			count: 1
-			path: app/Http/Controllers/Formateur/MesFormationsController.php
-
-		-
-			message: '#^Anonymous function has an unused use \$request\.$#'
-			identifier: closure.unusedUse
-			count: 1
-			path: app/Http/Controllers/Formateur/MesFormationsController.php
-
-		-
-			message: '#^Parameter \#1 \$callback of method Illuminate\\Database\\Eloquent\\Collection\<int,Illuminate\\Database\\Eloquent\\Model\>\:\:map\(\) expects callable\(Illuminate\\Database\\Eloquent\\Model, int\)\: \(array\{type\: ''module'', id\: int, title\: string, position\: int\<0, max\>, lesson_count\: int\<0, max\>, question_count\: int, duration_label\: string\}\|array\{type\: ''poll'', id\: lowercase\-string&non\-falsy\-string, position\: int\<0, max\>, poll_questions\: array, poll_duration\: int\<1, max\>\|null\}\|array\{type\: ''wordcloud'', id\: lowercase\-string&non\-falsy\-string, position\: int\<0, max\>, wc_title\: string, wc_questions\: array, wc_duration\: int\<1, max\>\|null\}\), Closure\(App\\Models\\FormateurParcoursItem\)\: \(array\{type\: ''module'', id\: int, title\: string, position\: int\<0, max\>, lesson_count\: int\<0, max\>, question_count\: int, duration_label\: string\}\|array\{type\: ''poll'', id\: lowercase\-string&non\-falsy\-string, position\: int\<0, max\>, poll_questions\: array, poll_duration\: int\<1, max\>\|null\}\|array\{type\: ''wordcloud'', id\: lowercase\-string&non\-falsy\-string, position\: int\<0, max\>, wc_title\: string, wc_questions\: array, wc_duration\: int\<1, max\>\|null\}\) given\.$#'
-			identifier: argument.type
-			count: 1
-			path: app/Http/Controllers/Formateur/MesFormationsController.php
-
-		-
-			message: '#^Relation ''sections'' is not found in App\\Models\\Module model\.$#'
-			identifier: larastan.relationExistence
-			count: 1
-			path: app/Http/Controllers/Formateur/MesFormationsController.php
-
-		-
 			message: '#^Access to an undefined property App\\Models\\ModuleLecture\:\:\$module\.$#'
 			identifier: property.notFound
 			count: 8
