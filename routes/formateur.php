@@ -170,18 +170,19 @@ Route::middleware(['auth', 'role:formateur', 'association.member'])
         Route::get('/outils-numeriques', [OutilsNumeriquesController::class, 'index'])
             ->name('outils.index');
 
-        if (\App\Support\Outils\EtatsOutils::actif('powerpoint_module')) {
-            Route::prefix('/outils-numeriques/powerpoint')
-                ->name('outils.powerpoint.')
-                ->group(function () {
-                    Route::get('/', [OutilsPowerPointController::class, 'index'])->name('index');
-                    Route::post('/', [OutilsPowerPointController::class, 'store'])->name('store');
-                    Route::get('/{module}', [OutilsPowerPointController::class, 'show'])->name('show');
-                    Route::get('/{module}/status', [OutilsPowerPointController::class, 'status'])->name('status');
-                    Route::post('/{module}/retry', [OutilsPowerPointController::class, 'retry'])->name('retry');
-                    Route::post('/{module}/publish', [OutilsPowerPointController::class, 'publish'])->name('publish');
-                });
-        }
+        // Le garde-fou est dans OutilsPowerPointController (pas ici) : routes toujours
+        // enregistrées, mais inaccessibles (404) quand l'outil est désactivé. Nécessaire
+        // pour rester testable (contrairement à un if ici, évalué une fois au boot).
+        Route::prefix('/outils-numeriques/powerpoint')
+            ->name('outils.powerpoint.')
+            ->group(function () {
+                Route::get('/', [OutilsPowerPointController::class, 'index'])->name('index');
+                Route::post('/', [OutilsPowerPointController::class, 'store'])->name('store');
+                Route::get('/{module}', [OutilsPowerPointController::class, 'show'])->name('show');
+                Route::get('/{module}/status', [OutilsPowerPointController::class, 'status'])->name('status');
+                Route::post('/{module}/retry', [OutilsPowerPointController::class, 'retry'])->name('retry');
+                Route::post('/{module}/publish', [OutilsPowerPointController::class, 'publish'])->name('publish');
+            });
 
         Route::get('/banque-de-questions-quiz', [OutilsQuizQuestionsController::class, 'index'])
             ->name('outils.quiz-questions.index');

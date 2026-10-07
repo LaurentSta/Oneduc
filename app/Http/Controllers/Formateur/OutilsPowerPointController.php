@@ -9,6 +9,7 @@ use App\Models\Category;
 use App\Models\Module;
 use App\Models\ModuleLecture;
 use App\Models\ModuleSection;
+use App\Support\Outils\EtatsOutils;
 use App\Support\Slides\SlideConversionEnvironment;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\RedirectResponse;
@@ -21,7 +22,10 @@ use Illuminate\View\View;
 
 class OutilsPowerPointController extends Controller
 {
-    public function __construct(private readonly AccesModule $accesModule) {}
+    public function __construct(private readonly AccesModule $accesModule)
+    {
+        abort_unless(EtatsOutils::actif('powerpoint_module'), 404);
+    }
 
     public function index(SlideConversionEnvironment $environment): View
     {
