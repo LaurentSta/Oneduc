@@ -21,50 +21,29 @@
   }"
 >
 
-  {{-- EN-TÊTE --}}
-  <div class="rounded-[20px] border border-gray-100 bg-white shadow-md mb-6">
-    <div class="grid gap-6 px-6 py-6 md:px-8 md:py-7 lg:grid-cols-12 lg:items-center">
-
-      <div class="lg:col-span-8">
-        @php
-          $formationsTabLabel = match(request('tab')) {
-            'parcours' => 'Parcours',
-            'creations' => 'Créations',
-            default => 'Catalogue',
-          };
-        @endphp
-        <x-oneduc.breadcrumb :items="[['label' => 'Accueil', 'url' => route('formateur.dashboard')], ['label' => $formationsTabLabel]]" />
-
-        <h1 class="font-raleway text-2xl font-medium leading-tight text-bleuone md:text-3xl">
-          Mes formations
-        </h1>
-        <p class="mt-0.5 font-varela text-base text-orangeone md:text-lg">
-          Suivez les formations que vous utilisez dans vos groupes.
-        </p>
-        <p class="mt-3 max-w-2xl font-lisible text-sm leading-relaxed text-slate-700">
-          Retrouvez ici toutes les formations utilisées, leur statut, les groupes concernés et les stagiaires associés.
-        </p>
-
-        {{-- 📊 Statistiques --}}
-        <div class="mt-4 flex flex-wrap gap-2 text-xs font-varela">
-          <span class="inline-flex items-center gap-1.5 rounded-full border border-bleuone/15 bg-bleuone/5 px-3 py-1 text-bleuone">
-            {{ $modules->total() }} formations
-          </span>
-          <span class="inline-flex items-center gap-1.5 rounded-full border border-orangeone/20 bg-orangeone/10 px-3 py-1 text-orangeone">
-            {{ $mesParcours->count() }} parcours
-          </span>
-        </div>
-      </div>
-
-      <div class="lg:col-span-4 flex justify-center lg:justify-end">
-        <img src="{{ asset('images/svg/header/Formations.svg') }}"
-             alt="Illustration des formations"
-             class="max-w-[220px] h-auto"
-             loading="lazy">
-      </div>
-
-    </div>
-  </div>
+  @php
+    $formationsTabLabel = match(request('tab')) {
+      'parcours' => 'Parcours',
+      'creations' => 'Créations',
+      default => 'Catalogue',
+    };
+  @endphp
+  <x-formateur.page-header
+    :breadcrumb="[['label' => 'Accueil', 'url' => route('formateur.dashboard')], ['label' => $formationsTabLabel]]"
+    title="Mes formations"
+    subtitle="Suivez les formations que vous utilisez dans vos groupes."
+    :image="asset('images/svg/header/Formations.svg')"
+    imageAlt="Illustration des formations"
+  >
+    <x-slot:badges>
+      <span class="inline-flex items-center gap-1.5 rounded-full border border-bleuone/15 bg-bleuone/5 px-3 py-1 text-bleuone">
+        {{ $modules->total() }} formations
+      </span>
+      <span class="inline-flex items-center gap-1.5 rounded-full border border-orangeone/20 bg-orangeone/10 px-3 py-1 text-orangeone">
+        {{ $mesParcours->count() }} parcours
+      </span>
+    </x-slot:badges>
+  </x-formateur.page-header>
 
   {{-- ONGLETS --}}
   <div class="mb-4 rounded-t-[14px] border border-gray-200 border-b-2 border-b-bleuone/15 bg-white px-3 pt-3 shadow-sm">

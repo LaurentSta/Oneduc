@@ -2,6 +2,10 @@
 
 *Public : développeurs et administrateurs système.*
 
+## Durcissement du 22 septembre 2026
+
+Les exceptions CSRF des routes SCORM ont été supprimées après ajout des jetons manquants dans les pages parentes et le wrapper d'évaluation. Les réponses Laravel portent des en-têtes de sécurité compatibles avec les iframes internes. `/up` vérifie désormais la base et le cache ; une commande contrôle la configuration avant livraison. Voir [Sécurité et préparation du déploiement](19-securite-deploiement.md) pour les tests, les limites, les dépendances corrigées et la procédure de production. Les inscriptions publiques et la politique de conservation restent à arbitrer.
+
 ## Authentification
 
 ### Mode standard
@@ -135,9 +139,9 @@ Points techniques à connaître :
 
 ## SCORM et CSRF
 
-Les routes `/scorm/save-progress`, `/scorm/save-block-progress` et `/scorm/evaluation-progress` désactivent le middleware CSRF (`VerifyCsrfToken::class`). C'est techniquement nécessaire car les packages SCORM s'exécutent dans un iframe et ne peuvent pas inclure le token CSRF Laravel.
+Les routes `/scorm/save-progress`, `/scorm/progress`, `/scorm/save-block-progress` et `/scorm/evaluation-progress` utilisent le middleware `PreventRequestForgery` de Laravel 13. Depuis le 22 septembre 2026, aucune de ces routes n'en est exemptée. Les wrappers de même origine lisent le jeton CSRF dans la page parente et l'envoient avec `X-CSRF-TOKEN`, y compris lors de la fermeture d'une évaluation.
 
-La compensation de sécurité vérifie que `Auth::id()` existe (middleware `auth`, ajouté le 5 juillet 2026 sur les 3 routes) **et** que l'utilisateur authentifié est bien autorisé à écrire la progression de la leçon/évaluation en cours (`User::aAccesAuModule()` — stagiaire d'un groupe actif auquel le module est affecté), avec 403 sinon. `scorm_scores` contient désormais `last_session_time`, au même titre que `content_block_scorm_scores`.
+En complément, le middleware `auth` exige une session authentifiée et les contrôleurs vérifient l'accès à la leçon/évaluation (`User::aAccesAuModule()` — stagiaire d'un groupe actif auquel le module est affecté), avec 403 sinon. Les scores et compteurs existants, dont `last_session_time`, ne sont pas modifiés par ce durcissement.
 
 ---
 

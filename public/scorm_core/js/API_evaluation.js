@@ -6,7 +6,12 @@
   function postKV(k, v) {
     return fetch(ctx.post_url, {
       method: 'POST',
-      headers: {'Content-Type':'application/json'},
+      headers: {
+        'Content-Type': 'application/json',
+        'X-CSRF-TOKEN': window.parent?.document.querySelector('meta[name="csrf-token"]')?.content
+          || document.querySelector('meta[name="csrf-token"]')?.content || ''
+      },
+      credentials: 'same-origin',
       body: JSON.stringify({
         evaluation_id: ctx.evaluation_id,
         scorm_key: String(k),

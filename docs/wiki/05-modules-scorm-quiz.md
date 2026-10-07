@@ -274,12 +274,14 @@ Le `ScormPackageVersion` expose un `getScormCacheTokenAttribute()` basé sur `im
 
 | Route | Méthode | CSRF | Authentification |
 |-------|---------|------|-----------------|
-| `/scorm/save-progress` | POST | Désactivé | Session Laravel (`Auth::id()`) |
+| `/scorm/save-progress` | POST | Activé | `auth` middleware |
 | `/scorm/progress` | POST | Activé | `auth` middleware |
-| `/scorm/save-block-progress` | POST | Désactivé | Session Laravel (`Auth::id()`) — bloc SCORM de leçon mixte |
-| `/lecture/{id}/scorm` | GET | — | Publique |
+| `/scorm/save-block-progress` | POST | Activé | `auth` middleware — bloc SCORM de leçon mixte |
+| `/lecture/{id}/scorm` | GET | — | `auth` middleware |
 | `/lecture/{id}/scorm-block/{key}` | GET | — | `auth` middleware — page wrapper d'un bloc SCORM |
-| `/scorm/evaluation-progress` | POST | Désactivé | Session Laravel |
+| `/scorm/evaluation-progress` | POST | Activé | `auth` middleware |
+
+Les pages parentes transmettent leur jeton aux wrappers de même origine, y compris celui des blocs SCORM imbriqués. Voir [Sécurité et préparation du déploiement](19-securite-deploiement.md) pour les contrôles et la validation des anciens packages avant livraison.
 
 ### Données persistées
 

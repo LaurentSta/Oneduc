@@ -10,7 +10,6 @@ use App\Models\Module;
 use App\Models\ModuleLecture;
 use App\Models\ModuleSection;
 use App\Models\QuizQuestion;
-use App\Models\ScormPackage;
 use App\Models\ScormPackageVersion;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
@@ -24,10 +23,9 @@ class ModuleLectureController extends Controller
     public function AddModuleLecture($id)
     {
         $module = Module::findOrFail($id);
-        $this->accesCatalogue->assertEditable($module);
-        $section = ModuleSection::where('module_id', $id)->latest()->get();
+        $this->accesCatalogue->assertCatalogue($module);
 
-        return view('admin.backend.modules.section.add_module_lecture', compact('module', 'section'));
+        return redirect()->route('admin.formations.constructeur.edit', $module);
     }
 
     public function MoveLectureUp($id)
@@ -106,41 +104,10 @@ class ModuleLectureController extends Controller
 
     public function EditLecture($id)
     {
-        $mlecture = ModuleLecture::query()
-            ->withCount([
-                'quizQuestions as quiz_questions_count',
-            ])
-            ->with([
-                'objectives' => function ($q) {
-                    $q->orderBy('position')->orderBy('id')
-                    ->with(['competencies' => function ($qq) {
-                        $qq->orderBy('pivot_position')->orderBy('label');
-                    }]);
-                },
-            ])
-            ->findOrFail($id);
+        $lecture = ModuleLecture::findOrFail($id);
+        $this->accesCatalogue->assertCatalogue($lecture->module);
 
-        $mlecture->load([
-            'scormPackage.activeVersion',
-            'scormPackage.versions' => fn ($q) => $q->orderByDesc('id'),
-            'scormPackageVersion',
-        ]);
-
-        $packages = ScormPackage::select('id', 'name', 'slug', 'active_version_id')
-            ->orderBy('name')
-            ->get();
-
-        $competencies = \App\Models\Competency::query()
-            ->where('is_active', 1)
-            ->orderBy('label')
-            ->get(['id', 'code', 'label']);
-
-        return view('admin.backend.modules.lecture.edit_module_lecture', [
-            'mlecture'           => $mlecture,
-            'packages'           => $packages,
-            'competencies'       => $competencies,
-            'quizQuestionsCount' => $mlecture->quiz_questions_count,
-        ]);
+        return redirect()->route('admin.formations.constructeur.lectures.edit', $lecture);
     }
 
     public function importSlidesForLecture(Request $request)

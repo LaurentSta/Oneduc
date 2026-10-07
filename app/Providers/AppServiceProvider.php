@@ -4,8 +4,12 @@ namespace App\Providers;
 
 use App\Models\User;
 use Illuminate\Cache\RateLimiting\Limit;
+use Illuminate\Foundation\Events\DiagnosingHealth;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
+use Illuminate\Support\Facades\Cache;
+use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Event;
 use Illuminate\Support\Facades\RateLimiter;
 use Illuminate\Support\Facades\URL;
 use Illuminate\Support\Facades\View;
@@ -26,6 +30,16 @@ class AppServiceProvider extends ServiceProvider
      */
     public function boot(): void
     {
+        Event::listen(DiagnosingHealth::class, function () {
+            try {
+                DB::select('SELECT 1');
+                Cache::get('oneduc:controle-sante');
+            } catch (\Throwable) {
+                // Ne pas exposer les détails de connexion dans /up ni dans ses logs.
+                throw new \RuntimeException('Un service nécessaire est indisponible.');
+            }
+        });
+
         // Forcer https très tôt
         if (app()->environment('production')) {
             URL::forceScheme('https');

@@ -21,37 +21,22 @@
      }"
      @keydown.escape.window="selectedTool = null">
 
-  {{-- En-tête --}}
-  <div class="rounded-[20px] border border-gray-100 bg-white shadow-md my-6">
-    <div class="grid gap-6 px-6 py-6 md:px-8 md:py-7 lg:grid-cols-12 lg:items-center">
-      <div class="lg:col-span-8">
-        <x-oneduc.breadcrumb :items="[['label' => 'Accueil', 'url' => route('formateur.dashboard')], ['label' => 'Outils numériques']]" />
-
-        <h1 class="font-raleway text-2xl font-medium leading-tight text-bleuone md:text-3xl">
-          Outils numériques
-        </h1>
-        <p class="mt-0.5 font-varela text-base text-orangeone md:text-lg">
-          Animez vos sessions en présentiel ou à distance.
-        </p>
-        <p class="mt-3 max-w-2xl font-lisible text-sm leading-relaxed text-slate-700">
-          Nuages de mots, quiz en direct, tableau blanc collaboratif — tous vos outils d'animation interactifs réunis.
-        </p>
-
-        {{-- 📊 Statistiques --}}
-        <div class="mt-4 flex flex-wrap gap-2 text-xs font-varela">
-          <span class="inline-flex items-center gap-1.5 rounded-full border border-bleuone/15 bg-bleuone/5 px-3 py-1 text-bleuone">
-            {{ $groups->count() }} groupes
-          </span>
-          <span class="inline-flex items-center gap-1.5 rounded-full border border-orangeone/20 bg-orangeone/10 px-3 py-1 text-orangeone">
-            {{ $groups->sum('students_count') }} stagiaires
-          </span>
-        </div>
-      </div>
-      <div class="lg:col-span-4 flex justify-center lg:justify-end">
-        <img src="{{ asset('images/svg/header/Outils.svg') }}" alt="Outils numériques" class="max-w-[220px] h-auto opacity-90">
-      </div>
-    </div>
-  </div>
+  <x-formateur.page-header
+    :breadcrumb="[['label' => 'Accueil', 'url' => route('formateur.dashboard')], ['label' => 'Outils numériques']]"
+    title="Outils numériques"
+    subtitle="Animez vos sessions en présentiel ou à distance."
+    :image="asset('images/svg/header/Outils.svg')"
+    imageAlt="Outils numériques"
+  >
+    <x-slot:badges>
+      <span class="inline-flex items-center gap-1.5 rounded-full border border-bleuone/15 bg-bleuone/5 px-3 py-1 text-bleuone">
+        {{ $groups->count() }} groupes
+      </span>
+      <span class="inline-flex items-center gap-1.5 rounded-full border border-orangeone/20 bg-orangeone/10 px-3 py-1 text-orangeone">
+        {{ $groups->sum('students_count') }} stagiaires
+      </span>
+    </x-slot:badges>
+  </x-formateur.page-header>
 
   {{-- Filtres + grille des outils --}}
   <div class="flex flex-col gap-6 lg:flex-row lg:items-start mb-8">

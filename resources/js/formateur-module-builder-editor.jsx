@@ -1,4 +1,5 @@
 import React, { useEffect, useRef, useState } from 'react';
+import { creerSauvegardeLecon } from './sauvegarde-lecon';
 import { createRoot } from 'react-dom/client';
 import { EditorContent, useEditor, useEditorState } from '@tiptap/react';
 import StarterKit from '@tiptap/starter-kit';
@@ -117,11 +118,11 @@ function createBlock(type) {
     case 'text':
       return { clientId: nextClientId(), type, html: '' };
     case 'image':
-      return { clientId: nextClientId(), type, media_id: null, url: '', caption: '' };
+      return { clientId: nextClientId(), type, media_id: null, url: '', caption: '', alt: '', decorative: false };
     case 'video':
-      return { clientId: nextClientId(), type, url: '', caption: '' };
+      return { clientId: nextClientId(), type, url: '', caption: '', transcript: '' };
     case 'audio':
-      return { clientId: nextClientId(), type, media_id: null, url: '', caption: '' };
+      return { clientId: nextClientId(), type, media_id: null, url: '', caption: '', transcript: '' };
     case 'quote':
       return { clientId: nextClientId(), type, text: '', source: '' };
     case 'scorm':
@@ -383,7 +384,7 @@ function ImageBlockEditor({ block, onChange, uploadUrl }) {
   return (
     <div className="space-y-2">
       {block.url ? (
-        <img src={block.url} alt={block.caption || ''} className="max-h-48 rounded-lg border border-gray-200 object-contain" />
+        <img src={block.url} alt={block.decorative ? '' : (block.alt ?? block.caption ?? '')} className="max-h-48 rounded-lg border border-gray-200 object-contain" />
       ) : (
         <div className="flex h-24 items-center justify-center rounded-lg border border-dashed border-gray-300 text-xs text-gray-400">
           Aucune image
@@ -415,8 +416,29 @@ function ImageBlockEditor({ block, onChange, uploadUrl }) {
         onChange={(e) => onChange({ ...block, caption: e.target.value })}
         className="w-full rounded-[10px] border border-gray-300 px-3 py-2 text-sm focus:border-orangeone focus:outline-none"
       />
+      <label className="flex items-center gap-2 text-sm text-gray-600">
+        <input type="checkbox" checked={Boolean(block.decorative)} onChange={(event) => onChange({ ...block, decorative: event.target.checked })} className="rounded border-gray-300 text-orangeone" />
+        Cette image est uniquement décorative
+      </label>
+      {!block.decorative && <div>
+        <label htmlFor={'alternative-' + block.clientId} className="block text-sm font-semibold text-bleuone">Description de l’image pour les lecteurs d’écran</label>
+        <input id={'alternative-' + block.clientId} type="text" maxLength={512} value={block.alt ?? block.caption ?? ''}
+               onChange={(event) => onChange({ ...block, alt: event.target.value })}
+               placeholder="Décrivez l’information utile, sans répéter la légende."
+               className="mt-2 w-full rounded-[10px] border border-gray-300 px-3 py-2 text-sm" />
+      </div>}
     </div>
   );
+}
+
+function TranscriptEditor({ block, onChange }) {
+  return <div>
+    <label htmlFor={'transcription-' + block.clientId} className="block text-sm font-semibold text-bleuone">Transcription ou explication textuelle</label>
+    <textarea id={'transcription-' + block.clientId} value={block.transcript || ''} maxLength={20000} rows={3}
+              onChange={(event) => onChange({ ...block, transcript: event.target.value })}
+              placeholder="Rendez les informations du média disponibles aussi en texte."
+              className="mt-2 w-full rounded-[10px] border border-gray-300 px-3 py-2 text-sm" />
+  </div>;
 }
 
 function VideoBlockEditor({ block, onChange, uploadUrl }) {
@@ -498,7 +520,7 @@ function VideoBlockEditor({ block, onChange, uploadUrl }) {
         <span className="text-xs text-gray-400">100 Mo max</span>
       </div>
       {error && <p className="text-xs text-red-500">{error}</p>}
-
+      <TranscriptEditor block={block} onChange={onChange} />
       <input
         type="text"
         placeholder="Legende (optionnel)"
@@ -606,6 +628,7 @@ function AudioBlockEditor({ block, onChange, uploadUrl, generateUrl }) {
       </div>
       <p className="text-xs text-gray-400">La generation IA lit le texte de toute la lecon (blocs Texte et Citation).</p>
       {error && <p className="text-xs text-red-500">{error}</p>}
+      <TranscriptEditor block={block} onChange={onChange} />
 
       <input
         type="text"
@@ -727,7 +750,7 @@ function DividerBlockEditor({ block, onChange }) {
   );
 }
 
-function BlockRow({ block, index, onChange, onRemove, onDragStart, onDragOver, onDrop, uploadUrl, videoUploadUrl, audioUploadUrl, audioGenerateUrl, scormUploadUrl }) {
+function BlockRow({ block, index, total, onMove, onChange, onRemove, onDragStart, onDragOver, onDrop, uploadUrl, videoUploadUrl, audioUploadUrl, audioGenerateUrl, scormUploadUrl }) {
   return (
     <div
       draggable
@@ -740,9 +763,11 @@ function BlockRow({ block, index, onChange, onRemove, onDragStart, onDragOver, o
         <span className="cursor-move text-xs font-bold uppercase tracking-wide text-gray-400">
           ⠿ {BLOCK_LABELS[block.type] || block.type}
         </span>
-        <button type="button" onClick={() => onRemove(index)} className="text-xs font-semibold text-red-500 hover:underline">
-          Supprimer
-        </button>
+        <div className="flex flex-wrap gap-3">
+          <button type="button" onClick={() => onMove(index, -1)} disabled={index === 0} aria-label="Monter ce bloc" className="text-sm font-semibold text-bleuone disabled:opacity-30">↑</button>
+          <button type="button" onClick={() => onMove(index, 1)} disabled={index === total - 1} aria-label="Descendre ce bloc" className="text-sm font-semibold text-bleuone disabled:opacity-30">↓</button>
+          <button type="button" onClick={() => onRemove(index)} className="text-xs font-semibold text-red-700 hover:underline">Supprimer</button>
+        </div>
       </div>
 
       {block.type === 'text' && <TextBlockEditor block={block} onChange={onChange} />}
@@ -756,21 +781,61 @@ function BlockRow({ block, index, onChange, onRemove, onDragStart, onDragOver, o
   );
 }
 
-const SAVE_STATUS = { IDLE: 'idle', SAVING: 'saving', SAVED: 'saved', ERROR: 'error' };
-const AUTOSAVE_DELAY_MS = 800;
+const SAVE_STATUS = { IDLE: 'idle', UNSAVED: 'unsaved', SAVING: 'saving', SAVED: 'saved', ERROR: 'error' };
 
-function SaveStatus({ status, savedAt }) {
+function SaveStatus({ status, savedAt, onSave }) {
+  if (status === SAVE_STATUS.UNSAVED) {
+    return <button type="button" onClick={onSave} className="text-xs font-semibold text-orangeone">Enregistrer maintenant</button>;
+  }
   if (status === SAVE_STATUS.SAVING) {
     return <span className="text-xs text-gray-400">Enregistrement…</span>;
   }
   if (status === SAVE_STATUS.ERROR) {
-    return <span className="text-xs text-red-500">Échec de l'enregistrement</span>;
+    return <button type="button" onClick={onSave} className="text-xs font-semibold text-red-700">Échec de l’enregistrement — Réessayer</button>;
   }
   if (status === SAVE_STATUS.SAVED && savedAt) {
     return <span className="text-xs text-vertone">Enregistré à {savedAt}</span>;
   }
   return null;
 }
+
+function InsertBlockMenu({ index, onAdd, disabled }) {
+  return (
+    <details className="relative my-3">
+      <summary className="cursor-pointer rounded-[10px] border border-dashed border-gray-300 px-3 py-2 text-center text-sm font-semibold text-bleuone">+ Ajouter un bloc ici</summary>
+      <div className="mt-2 flex flex-wrap gap-2 rounded-[12px] border border-gray-200 bg-white p-3">
+        {Object.entries(BLOCK_LABELS).map(([type, label]) => {
+          const Glyph = BLOCK_GLYPHS[type];
+          return <button key={type} type="button" disabled={disabled} onClick={(event) => {
+            onAdd(type, index);
+            event.currentTarget.closest('details').open = false;
+          }} className="flex items-center gap-2 rounded-[8px] border border-gray-300 px-3 py-2 text-sm font-semibold text-gray-600 hover:border-orangeone hover:text-orangeone disabled:opacity-40"><Glyph />{label}</button>;
+        })}
+      </div>
+    </details>
+  );
+}
+
+const LESSON_TEMPLATES = [
+  { key: 'decouverte', label: 'Découvrir une notion', sections: [
+    ['Une situation concrète', 'Présentez une situation familière au stagiaire et ce que cette leçon lui permettra de faire.'],
+    ['Comprendre avec un exemple', 'Expliquez une idée à la fois, puis montrez un exemple concret.'],
+    ['À vous de jouer', 'Proposez une courte activité pour mettre cette idée en pratique.'],
+    ['À retenir', 'Résumez les points utiles et ajoutez une fiche mémo dans les ressources.'],
+  ] },
+  { key: 'demarche', label: 'Réaliser une démarche', sections: [
+    ['Le résultat attendu', 'Décrivez la tâche à réaliser et les éléments à vérifier à la fin.'],
+    ['Observer une démonstration', 'Ajoutez une démonstration ou des captures accompagnées d’une explication accessible.'],
+    ['Réaliser les étapes', 'Décrivez les étapes et les aides disponibles en cas de difficulté.'],
+    ['Vérifier son résultat', 'Proposez une tâche pratique et une liste des critères de réussite.'],
+  ] },
+  { key: 'entrainement', label: 'S’entraîner', sections: [
+    ['Se rappeler l’essentiel', 'Rappelez brièvement ce qui sera utilisé dans l’exercice.'],
+    ['Essayer', 'Décrivez un exercice réalisable avec les outils et les connaissances du stagiaire.'],
+    ['Comprendre et recommencer', 'Expliquez les erreurs fréquentes et donnez une nouvelle occasion de s’entraîner.'],
+    ['Vérifier les acquis', 'Choisissez une vérification adaptée à l’objectif de la leçon.'],
+  ] },
+];
 
 function LectureEditor({ lectureId, initialTitle, initialBlocks, updateUrl, uploadUrl, videoUploadUrl, audioUploadUrl, audioGenerateUrl, scormUploadUrl }) {
   const [title, setTitle] = useState(initialTitle || '');
@@ -779,37 +844,34 @@ function LectureEditor({ lectureId, initialTitle, initialBlocks, updateUrl, uplo
   );
   const [status, setStatus] = useState(SAVE_STATUS.IDLE);
   const [savedAt, setSavedAt] = useState('');
+  const [removedBlock, setRemovedBlock] = useState(null);
   const dragIndexRef = useRef(null);
-  const saveTimeoutRef = useRef(null);
   const skipNextSaveRef = useRef(true);
-
-  const save = async () => {
-    setStatus(SAVE_STATUS.SAVING);
-    try {
-      const response = await fetch(updateUrl, {
+  const saveRef = useRef(null);
+  if (!saveRef.current) {
+    saveRef.current = creerSauvegardeLecon({
+      notifier: (state) => {
+        setStatus(state);
+        if (state === SAVE_STATUS.SAVED) setSavedAt(new Date().toLocaleTimeString('fr-FR', { hour: '2-digit', minute: '2-digit' }));
+      },
+      envoyer: async (payload) => {
+        const response = await fetch(updateUrl, {
         method: 'PUT',
         headers: {
           'Content-Type': 'application/json',
           Accept: 'application/json',
           'X-CSRF-TOKEN': csrfToken(),
         },
-        body: JSON.stringify({
-          lecture_title: title,
-          content_blocks: JSON.stringify(blocks.map(({ clientId, ...rest }) => rest)),
-        }),
+        body: JSON.stringify(payload),
       });
-
       if (!response.ok) throw new Error('save failed');
-
-      setStatus(SAVE_STATUS.SAVED);
-      setSavedAt(new Date().toLocaleTimeString('fr-FR', { hour: '2-digit', minute: '2-digit' }));
       window.dispatchEvent(new CustomEvent('module-builder:lecture-saved', {
-        detail: { id: lectureId, lecture_title: title },
+        detail: { id: lectureId, lecture_title: payload.lecture_title },
       }));
-    } catch (e) {
-      setStatus(SAVE_STATUS.ERROR);
-    }
-  };
+      },
+    });
+  }
+  const save = () => saveRef.current.enregistrer().catch(() => {});
 
   useEffect(() => {
     if (skipNextSaveRef.current) {
@@ -817,16 +879,83 @@ function LectureEditor({ lectureId, initialTitle, initialBlocks, updateUrl, uplo
       return undefined;
     }
 
-    if (saveTimeoutRef.current) clearTimeout(saveTimeoutRef.current);
-    saveTimeoutRef.current = setTimeout(save, AUTOSAVE_DELAY_MS);
-
-    return () => { if (saveTimeoutRef.current) clearTimeout(saveTimeoutRef.current); };
-    // eslint-disable-next-line react-hooks/exhaustive-deps
+    saveRef.current.planifier({
+      lecture_title: title,
+      content_blocks: JSON.stringify(blocks.map(({ clientId, ...rest }) => rest)),
+    });
+    return undefined;
   }, [title, blocks]);
 
-  const addBlock = (type) => setBlocks((prev) => [...prev, createBlock(type)]);
+  useEffect(() => {
+    const manager = saveRef.current;
+    let resubmitting = false;
+    const beforeUnload = (event) => {
+      if (!manager.estModifiee()) return;
+      event.preventDefault();
+      event.returnValue = '';
+    };
+    const followLink = async (event) => {
+      const link = event.target.closest?.('a[href]');
+      if (!link || !manager.estModifiee() || event.defaultPrevented || event.button !== 0
+        || event.ctrlKey || event.metaKey || event.shiftKey || event.altKey || link.hasAttribute('download')) return;
+      const url = new URL(link.href, window.location.href);
+      if (url.origin !== window.location.origin || link.getAttribute('href').startsWith('#')) return;
+      event.preventDefault();
+      const popup = link.target === '_blank' ? window.open('about:blank', '_blank') : null;
+      try {
+        await manager.enregistrer();
+        if (popup) { popup.opener = null; popup.location.href = url.href; }
+        else window.location.assign(url.href);
+      } catch { popup?.close(); }
+    };
+    const submitForm = async (event) => {
+      if (resubmitting || !manager.estModifiee()) return;
+      event.preventDefault();
+      const form = event.target;
+      const submitter = event.submitter;
+      try {
+        await manager.enregistrer();
+        resubmitting = true;
+        form.requestSubmit(submitter || undefined);
+      } catch { /* Le statut visible permet de réessayer sans quitter la leçon. */ }
+      finally { resubmitting = false; }
+    };
+    window.addEventListener('beforeunload', beforeUnload);
+    document.addEventListener('click', followLink, true);
+    document.addEventListener('submit', submitForm, true);
+    return () => {
+      manager.detruire();
+      window.removeEventListener('beforeunload', beforeUnload);
+      document.removeEventListener('click', followLink, true);
+      document.removeEventListener('submit', submitForm, true);
+    };
+  }, []);
+
+  useEffect(() => {
+    const panel = document.querySelector('[data-import-support]');
+    if (panel) panel.hidden = blocks.length > 0;
+  }, [blocks.length]);
+
+  const addBlock = (type, index) => setBlocks((prev) => {
+    if (prev.length >= 100) return prev;
+    const next = [...prev];
+    next.splice(index, 0, createBlock(type));
+    return next;
+  });
   const updateBlock = (index, updated) => setBlocks((prev) => prev.map((b, i) => (i === index ? updated : b)));
-  const removeBlock = (index) => setBlocks((prev) => prev.filter((_, i) => i !== index));
+  const removeBlock = (index) => {
+    setRemovedBlock({ block: blocks[index], index });
+    setBlocks((prev) => prev.filter((_, i) => i !== index));
+  };
+  const moveBlock = (index, direction) => {
+    setBlocks((prev) => {
+      const next = [...prev];
+      const target = index + direction;
+      if (target < 0 || target >= next.length) return prev;
+      [next[index], next[target]] = [next[target], next[index]];
+      return next;
+    });
+  };
 
   const handleDragStart = (index) => { dragIndexRef.current = index; };
   const handleDragOver = () => {};
@@ -854,15 +983,43 @@ function LectureEditor({ lectureId, initialTitle, initialBlocks, updateUrl, uplo
           placeholder="Titre de la leçon"
           className="flex-1 rounded-[10px] border border-gray-300 px-3 py-2 text-sm font-semibold focus:border-orangeone focus:outline-none"
         />
-        <SaveStatus status={status} savedAt={savedAt} />
+        <div aria-live="polite"><SaveStatus status={status} savedAt={savedAt} onSave={save} /></div>
       </div>
 
+      {removedBlock && <div role="status" className="flex flex-wrap items-center justify-between gap-3 rounded-[10px] bg-gray-100 p-3 text-sm">
+        <span>Bloc supprimé.</span>
+        <button type="button" onClick={() => {
+          setBlocks((prev) => {
+            const next = [...prev];
+            next.splice(Math.min(removedBlock.index, next.length), 0, removedBlock.block);
+            return next;
+          });
+          setRemovedBlock(null);
+        }} className="font-semibold text-bleuone">Annuler la suppression</button>
+      </div>}
+
+      {blocks.length === 0 && <div className="rounded-[14px] border border-gray-200 bg-gray-50 p-4">
+        <p className="text-sm font-semibold text-bleuone">Commencer avec une trame pédagogique</p>
+        <p className="mt-1 text-sm text-gray-600">Choisissez une structure, puis adaptez les textes et les activités à votre public.</p>
+        <div className="mt-3 flex flex-wrap gap-2">{LESSON_TEMPLATES.map((template) => <button key={template.key} type="button" onClick={() => {
+          const result = [];
+          template.sections.forEach(([heading, body], index) => {
+            if (index > 0) result.push({ ...createBlock('divider'), mode: 'reveal' });
+            result.push({ ...createBlock('text'), html: '<h2>' + heading + '</h2><p>' + body + '</p>' });
+          });
+          setBlocks(result);
+        }} className="rounded-[10px] border border-gray-300 bg-white px-3 py-2 text-sm font-semibold text-bleuone hover:border-orangeone">{template.label}</button>)}</div>
+      </div>}
+
+      <InsertBlockMenu index={0} onAdd={addBlock} disabled={blocks.length >= 100} />
       <div className="space-y-3">
         {blocks.map((block, index) => (
+          <React.Fragment key={block.clientId}>
           <BlockRow
-            key={block.clientId}
             block={block}
             index={index}
+            total={blocks.length}
+            onMove={moveBlock}
             onChange={(updated) => updateBlock(index, updated)}
             onRemove={removeBlock}
             onDragStart={handleDragStart}
@@ -874,6 +1031,8 @@ function LectureEditor({ lectureId, initialTitle, initialBlocks, updateUrl, uplo
             audioGenerateUrl={audioGenerateUrl}
             scormUploadUrl={scormUploadUrl}
           />
+          <InsertBlockMenu index={index + 1} onAdd={addBlock} disabled={blocks.length >= 100} />
+          </React.Fragment>
         ))}
 
         {blocks.length === 0 && (
@@ -881,22 +1040,6 @@ function LectureEditor({ lectureId, initialTitle, initialBlocks, updateUrl, uplo
         )}
       </div>
 
-      <div className="flex flex-wrap gap-2.5">
-        {Object.entries(BLOCK_LABELS).map(([type, label]) => {
-          const Glyph = BLOCK_GLYPHS[type];
-          return (
-            <button
-              key={type}
-              type="button"
-              onClick={() => addBlock(type)}
-              className="flex items-center gap-2 rounded-[10px] border border-gray-300 bg-white px-4 py-2.5 text-sm font-bold text-gray-600 transition-all duration-150 hover:-translate-y-0.5 hover:border-orangeone hover:text-orangeone hover:shadow-md active:translate-y-0 active:scale-95"
-            >
-              <Glyph />
-              {label}
-            </button>
-          );
-        })}
-      </div>
     </div>
   );
 }

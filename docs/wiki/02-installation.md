@@ -6,7 +6,7 @@
 
 | Outil | Version minimale |
 |-------|-----------------|
-| PHP | 8.2+ |
+| PHP | 8.3+ (Laravel 13) |
 | Composer | 2.x |
 | Node.js | 18+ |
 | NPM | 9+ |
@@ -218,6 +218,8 @@ En production, ces dossiers doivent être sauvegardés séparément du code sour
 ---
 
 ## Notes pour la production
+
+Suivre la [procédure de préparation du déploiement](19-securite-deploiement.md), puis lancer `php artisan oneduc:verifier-production` sur la release préparée. La CI contrôle désormais les tests MySQL, PHPStan, le format des fichiers modifiés, les audits et le build frontend.
 
 - Désactiver `APP_DEBUG=false` obligatoirement
 - Configurer un vrai driver mail (SMTP)

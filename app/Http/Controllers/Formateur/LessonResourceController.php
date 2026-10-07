@@ -2,6 +2,7 @@
 
 namespace App\Http\Controllers\Formateur;
 
+use App\Domains\ModulesFormateur\Actions\AjouterRessourceLecon;
 use App\Domains\ModulesFormateur\Support\AccesModule;
 use App\Http\Controllers\Controller;
 use App\Models\LessonResource;
@@ -11,48 +12,15 @@ use App\Models\ModuleSection;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Storage;
-use Illuminate\Support\Str;
 
 class LessonResourceController extends Controller
 {
     public function __construct(private readonly AccesModule $accesModule) {}
 
-    public function store(Request $request, Module $module, ModuleSection $section, ModuleLecture $lecture): RedirectResponse
+    public function store(Request $request, Module $module, ModuleSection $section, ModuleLecture $lecture, AjouterRessourceLecon $action): RedirectResponse
     {
         $this->assertCanManage($request, $module, $section, $lecture);
-
-        $validated = $request->validate([
-            'title' => ['nullable', 'string', 'max:255'],
-            'resource_file' => [
-                'required',
-                'file',
-                'mimes:jpg,jpeg,png,gif,webp,avif,pdf,doc,docx,odt,txt,rtf,xls,xlsx,ods,ppt,pptx,odp,csv',
-                'max:51200',
-            ],
-            'is_visible_to_stagiaire' => ['nullable', 'boolean'],
-        ]);
-
-        $file = $request->file('resource_file');
-        $baseName = Str::slug(pathinfo((string) $file->getClientOriginalName(), PATHINFO_FILENAME));
-        $extension = strtolower((string) $file->getClientOriginalExtension());
-        $storedPath = $file->storeAs(
-            'module-resources/module_' . $module->id,
-            now()->format('Ymd_His') . '_' . Str::random(8) . '_' . ($baseName ?: 'resource') . '.' . $extension,
-            'public'
-        );
-
-        $nextPosition = ((int) $module->moduleResources()->max('position')) + 1;
-
-        $module->moduleResources()->create([
-            'lecture_id' => $lecture->id,
-            'title' => trim((string) ($validated['title'] ?? '')) ?: pathinfo((string) $file->getClientOriginalName(), PATHINFO_FILENAME),
-            'file_path' => $storedPath,
-            'original_name' => (string) $file->getClientOriginalName(),
-            'mime_type' => $file->getMimeType(),
-            'file_size' => (int) $file->getSize(),
-            'is_visible_to_stagiaire' => $request->boolean('is_visible_to_stagiaire'),
-            'position' => $nextPosition,
-        ]);
+        $action->execute($lecture, $request);
 
         return back()->with('success', 'Ressource ajoutée au module.');
     }

@@ -106,23 +106,40 @@
 
               <td class="px-4 py-3 text-right">
                 <div class="inline-flex items-center gap-2">
-                  <a href="{{ route('admin.modules.edit', $module->id) }}"
-                     class="inline-flex items-center gap-2 px-3 py-2 rounded-lg border border-bleuone/20 text-bleuone hover:bg-bleuone hover:text-white transition text-xs font-varela cursor-pointer">
-                    <i class="ti ti-settings"></i>
-                    Config
+                  <a href="{{ route('admin.formations.constructeur.edit', $module->id) }}"
+                     title="Ouvrir dans le constructeur (éditeur par blocs, IA, aperçu)"
+                     class="inline-flex items-center gap-2 px-3 py-2 rounded-lg bg-bleuone text-white hover:opacity-90 transition text-xs font-varela cursor-pointer">
+                    <i class="ti ti-tool"></i>
+                    Constructeur
                   </a>
 
-                  <a href="{{ route('admin.modules.lecture.add', $module->id) }}"
-                     class="inline-flex items-center gap-2 px-3 py-2 rounded-lg border border-orange-200 text-orange-700 hover:bg-orangeone hover:text-white hover:border-orangeone transition text-xs font-varela cursor-pointer">
-                    <i class="ti ti-stack-2"></i>
-                    Contenu
-                  </a>
+                  <div class="relative inline-block text-left" x-data="{ open: false }">
+                    <button type="button" @click="open = !open"
+                            class="inline-flex items-center justify-center w-9 h-9 rounded-lg border border-gray-300 hover:bg-gray-50"
+                            aria-haspopup="true" :aria-expanded="open.toString()" aria-label="Autres actions">
+                      <i class="ti ti-dots-vertical"></i>
+                    </button>
 
-                  <button type="button" x-data x-on:click="$dispatch('open-modal', 'delete-module-{{ $module->id }}')"
-                          class="inline-flex items-center gap-2 px-3 py-2 rounded-lg border border-red-200 text-red-700 hover:bg-red-600 hover:text-white transition text-xs font-varela cursor-pointer">
-                    <i class="ti ti-trash"></i>
-                    Supprimer
-                  </button>
+                    <div x-show="open" @click.outside="open = false" x-transition
+                         class="absolute right-0 mt-2 w-60 origin-top-right rounded-lg bg-white shadow-lg ring-1 ring-black/5 z-50" role="menu">
+                      <div class="py-2 text-sm text-gray-700">
+                        <p class="px-4 pb-1 text-[11px] font-bold uppercase tracking-wide text-gray-400">Ancien système</p>
+                        <a href="{{ route('admin.modules.edit', $module->id) }}" class="flex items-center gap-2 px-4 py-2 hover:bg-gray-50" role="menuitem">
+                          <i class="ti ti-settings"></i> Config
+                        </a>
+                        <a href="{{ route('admin.modules.lecture.add', $module->id) }}" class="flex items-center gap-2 px-4 py-2 hover:bg-gray-50" role="menuitem">
+                          <i class="ti ti-stack-2"></i> Contenu
+                        </a>
+                        <div class="my-2 border-t"></div>
+                        <div class="px-4">
+                          <button type="button" x-on:click="$dispatch('open-modal', 'delete-module-{{ $module->id }}')"
+                                  class="flex w-full items-center gap-2 px-0 py-2 text-left text-red-700 hover:text-red-800" role="menuitem">
+                            <i class="ti ti-trash"></i> Supprimer
+                          </button>
+                        </div>
+                      </div>
+                    </div>
+                  </div>
                   <x-confirm-modal
                     name="delete-module-{{ $module->id }}"
                     title="Supprimer ce module ?"

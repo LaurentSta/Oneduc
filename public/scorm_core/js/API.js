@@ -154,6 +154,7 @@
   }
 
   async function envoyerProgression(key, value) {
+    if (getContext()?.preview === true) return null;
     const lectureId = getLectureId();
     if (!lectureId || !shouldSend(key, value)) return null;
 

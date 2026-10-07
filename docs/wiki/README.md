@@ -46,6 +46,7 @@ Chaque page indique en tête son public visé. Les pages mixtes regroupent la pa
 | 16 | [Émargement](16-emargement.md) | Feuille de présence par séance datée, signature graphique, export PDF Qualiopi/OPCO |
 | 17 | [Audit site du 14 juillet 2026](17-audit-site-2026-07-14.md) | Suivi de l'audit du 5 juillet, faille d'accès module corrigée, crawl public 100% sain |
 | 18 | [Accessibilité et démarche RGAA](18-accessibilite-rgaa.md) | Déclaration publique, schéma 2026-2028, plan 2026 et règles de suivi |
+| 19 | [Sécurité et préparation du déploiement](19-securite-deploiement.md) | Correctifs CSRF, dépendances, CI, contrôles de production, sauvegarde et retour arrière |
 
 ---
 

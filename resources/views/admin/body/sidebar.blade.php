@@ -56,6 +56,12 @@
                         || request()->routeIs('admin.quiz.*'),
                 ],
                 [
+                    'label' => 'Constructeur',
+                    'href' => route('admin.formations.constructeur.index'),
+                    'icon' => 'ti-tool',
+                    'active' => request()->routeIs('admin.formations.constructeur.*'),
+                ],
+                [
                     'label' => 'Évaluations',
                     'href' => route('admin.evaluations.index'),
                     'icon' => 'ti-clipboard-check',

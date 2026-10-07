@@ -13,7 +13,7 @@
     @if($media)
       <figure class="mb-6">
         <img src="{{ $media->getUrl('display') }}"
-             alt="{{ $block['caption'] ?? '' }}"
+             alt="{{ ($block['decorative'] ?? false) ? '' : ($block['alt'] ?? $block['caption'] ?? '') }}"
              class="w-full rounded-xl border border-gray-200">
         @if(!empty($block['caption']))
           <figcaption class="mt-2 text-center text-sm text-gray-500">{{ $block['caption'] }}</figcaption>
@@ -30,11 +30,17 @@
           <video src="{{ $videoInfo['embed_url'] }}" controls class="w-full rounded-xl border border-gray-200"></video>
         @else
           <div class="aspect-video w-full overflow-hidden rounded-xl border border-gray-200">
-            <iframe src="{{ $videoInfo['embed_url'] }}" class="h-full w-full" allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture" allowfullscreen></iframe>
+            <iframe src="{{ $videoInfo['embed_url'] }}" title="{{ $block['caption'] ?? 'Vidéo de la leçon' }}" class="h-full w-full" allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture" allowfullscreen></iframe>
           </div>
         @endif
         @if(!empty($block['caption']))
           <figcaption class="mt-2 text-center text-sm text-gray-500">{{ $block['caption'] }}</figcaption>
+        @endif
+        @if(!empty($block['transcript']))
+          <details class="mt-3 rounded-[10px] border border-gray-200 p-3">
+            <summary class="cursor-pointer text-sm font-semibold text-bleuone">Lire la transcription de la vidéo</summary>
+            <p class="mt-3 whitespace-pre-line text-sm text-gray-700">{{ $block['transcript'] }}</p>
+          </details>
         @endif
       </figure>
     @endif
@@ -57,6 +63,12 @@
         @if(!empty($block['caption']))
           <p class="mt-2 text-center text-sm text-gray-500">{{ $block['caption'] }}</p>
         @endif
+        @if(!empty($block['transcript']))
+          <details class="mt-3 rounded-[10px] border border-gray-200 p-3">
+            <summary class="cursor-pointer text-sm font-semibold text-bleuone">Lire la transcription de l’audio</summary>
+            <p class="mt-3 whitespace-pre-line text-sm text-gray-700">{{ $block['transcript'] }}</p>
+          </details>
+        @endif
       </div>
     @endif
     @break
@@ -68,7 +80,9 @@
   @case('scorm')
     @if($lecture && !empty($block['content_block_key']))
       <div class="mb-6 overflow-hidden rounded-xl border border-gray-200" style="height: 70vh;">
-        <iframe src="{{ route('lecture.scorm-block', ['id' => $lecture->id, 'key' => $block['content_block_key']]) }}"
+        <iframe src="{{ ($apercu ?? false)
+            ? route($nomRoutesConstructeur.'.lectures.apercu-scorm', ['lecture' => $lecture, 'bloc' => $block['content_block_key']])
+            : route('lecture.scorm-block', ['id' => $lecture->id, 'key' => $block['content_block_key']]) }}"
                 class="h-full w-full border-0" title="Contenu SCORM" allowfullscreen></iframe>
       </div>
     @endif

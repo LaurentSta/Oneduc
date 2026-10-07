@@ -3,6 +3,9 @@
 namespace App\Http\Controllers\Backend;
 
 use App\Domains\ModulesFormateur\Actions\CreerChapitre;
+use App\Domains\ModulesFormateur\Actions\AjouterRessourceLecon;
+use App\Domains\ModulesFormateur\Actions\ImporterSupportLecon;
+use App\Domains\ModulesFormateur\Actions\ModifierPedagogieLecon;
 use App\Domains\ModulesFormateur\Actions\CreerLecon;
 use App\Domains\ModulesFormateur\Actions\CreerModule;
 use App\Domains\ModulesFormateur\Actions\DeplacerLecon;
@@ -24,6 +27,7 @@ use App\Domains\ModulesFormateur\Support\DonneesModule;
 use App\Http\Controllers\Controller;
 use App\Models\Category;
 use App\Models\Group;
+use App\Models\LessonResource;
 use App\Models\Module;
 use App\Models\ModuleLecture;
 use App\Models\ModuleSection;
@@ -31,6 +35,7 @@ use App\Models\User;
 use App\Services\ConsommationIADashboardService;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Schema;
+use Illuminate\Support\Facades\Storage;
 use Illuminate\Validation\Rule;
 use Illuminate\Validation\ValidationException;
 
@@ -285,12 +290,7 @@ class ConstructeurFormationController extends Controller
             return back()->with('error', "Ajoutez au moins une leçon avant d'ouvrir l'aperçu.");
         }
 
-        return view('admin.backend.formations-constructeur.preview', [
-            'module' => $module,
-            'section' => $section,
-            'lecture' => $lecture,
-            'initialBlocks' => $this->donneesModule->resolvedContentBlocks($lecture),
-        ]);
+        return view('admin.backend.formations-constructeur.preview', $this->donneesModule->apercu($lecture));
     }
 
     public function storeSection(Request $request, Module $module)
@@ -404,14 +404,70 @@ class ConstructeurFormationController extends Controller
     public function editLecture(ModuleLecture $lecture)
     {
         $this->acces->assertCatalogue($lecture->module);
-        $lecture->load('section');
 
-        return view('admin.backend.formations-constructeur.lecture-edit', [
-            'module' => $lecture->module,
-            'section' => $lecture->section,
+        return view('admin.backend.formations-constructeur.lecture-edit', $this->donneesModule->conception($lecture));
+    }
+
+    public function modifierPedagogie(Request $request, ModuleLecture $lecture, ModifierPedagogieLecon $action)
+    {
+        $this->acces->assertEditable($lecture->module);
+        $action->execute($lecture, $request->all());
+
+        return back()->with('success', 'Réglages pédagogiques enregistrés.');
+    }
+
+    public function importerSupport(Request $request, ModuleLecture $lecture, ImporterSupportLecon $action)
+    {
+        $this->acces->assertEditable($lecture->module);
+        $action->execute($lecture, $request);
+
+        return back()->with('success', 'Support importé. Les présentations sont converties en arrière-plan.');
+    }
+
+    public function relancerSlides(ModuleLecture $lecture, ImporterSupportLecon $action)
+    {
+        $this->acces->assertEditable($lecture->module);
+        $action->relancer($lecture);
+
+        return back()->with('success', 'Conversion relancée.');
+    }
+
+    public function apercuScorm(Request $request, ModuleLecture $lecture)
+    {
+        $this->acces->assertCatalogue($lecture->module);
+
+        return view('shared.scorm-apercu', [
             'lecture' => $lecture,
-            'initialBlocks' => $this->donneesModule->resolvedContentBlocks($lecture),
+            'scormUrl' => $this->donneesModule->urlScormApercu($lecture, $request->query('bloc')),
         ]);
+    }
+
+    public function ajouterRessource(Request $request, ModuleLecture $lecture, AjouterRessourceLecon $action)
+    {
+        $this->acces->assertEditable($lecture->module);
+        $action->execute($lecture, $request);
+
+        return back()->with('success', 'Ressource ajoutée au module.');
+    }
+
+    public function modifierVisibiliteRessource(Request $request, ModuleLecture $lecture, LessonResource $resource)
+    {
+        $this->acces->assertEditable($lecture->module);
+        abort_unless((int) $resource->module_id === (int) $lecture->module_id, 404);
+        $valide = $request->validate(['is_visible_to_stagiaire' => ['required', 'boolean']]);
+        $resource->update($valide);
+
+        return back()->with('success', 'Visibilité de la ressource enregistrée.');
+    }
+
+    public function supprimerRessource(ModuleLecture $lecture, LessonResource $resource)
+    {
+        $this->acces->assertEditable($lecture->module);
+        abort_unless((int) $resource->module_id === (int) $lecture->module_id, 404);
+        Storage::disk('public')->delete($resource->file_path);
+        $resource->delete();
+
+        return back()->with('success', 'Ressource supprimée.');
     }
 
     public function updateLecture(Request $request, ModuleLecture $lecture)

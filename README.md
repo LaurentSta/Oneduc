@@ -32,6 +32,7 @@ Ressources utiles :
 - [Installation et configuration](docs/wiki/02-installation.md)
 - [Architecture technique](docs/wiki/03-architecture.md)
 - [Securite et RGPD](docs/wiki/10-securite-rgpd.md)
+- [Audit securite et mise en production - septembre 2026](docs/audit-securite-production-2026-09-22.md)
 - [Roadmap](docs/wiki/11-roadmap.md)
 - [Checklist de publication GitHub](docs/wiki/13-publication-github.md)
 

@@ -59,7 +59,7 @@ it('crée une version brouillon indépendante avec ses médias quiz et ressource
         'published_at' => now(),
     ]);
 
-    $media = $source->addMedia(UploadedFile::fake()->create('illustration.png', 10, 'image/png'))
+    $media = $source->addMedia(UploadedFile::fake()->image('illustration.png', 32, 32))
         ->toMediaCollection('lesson-images');
     $section = $source->sections()->create(['section_title' => 'Chapitre', 'position' => 0]);
     $lecture = $section->lectures()->create([

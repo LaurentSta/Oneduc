@@ -337,6 +337,7 @@ Route::middleware(['auth', 'role:formateur', 'association.member'])
             Route::post('/{module}/audios', [ModuleBuilderController::class, 'uploadAudio'])->name('audios.store');
             Route::post('/{module}/scorm', [ModuleBuilderController::class, 'uploadScorm'])->name('scorm.store');
             Route::get('/{module}/edition', [ModuleBuilderController::class, 'edit'])->name('edit');
+            Route::get('/{module}/apercu', [ModuleBuilderController::class, 'preview'])->name('preview');
             Route::put('/{module}', [ModuleBuilderController::class, 'update'])->name('update');
             Route::put('/{module}/options', [ModuleBuilderController::class, 'updateOptions'])->name('options.update');
             Route::delete('/{module}', [ModuleBuilderController::class, 'destroy'])->name('destroy');
@@ -351,6 +352,10 @@ Route::middleware(['auth', 'role:formateur', 'association.member'])
             Route::get('/lectures/{lecture}/edition', [ModuleBuilderController::class, 'editLecture'])->name('lectures.edit');
             Route::post('/lectures/{lecture}/generer-audio', [ModuleBuilderController::class, 'generateAudioLecture'])->name('lectures.generate-audio');
             Route::put('/lectures/{lecture}', [ModuleBuilderController::class, 'updateLecture'])->name('lectures.update');
+            Route::put('/lectures/{lecture}/pedagogie', [ModuleBuilderController::class, 'modifierPedagogie'])->name('lectures.pedagogie');
+            Route::post('/lectures/{lecture}/support', [ModuleBuilderController::class, 'importerSupport'])->name('lectures.support.store');
+            Route::post('/lectures/{lecture}/support/relancer', [ModuleBuilderController::class, 'relancerSlides'])->name('lectures.support.relancer');
+            Route::get('/lectures/{lecture}/apercu-scorm', [ModuleBuilderController::class, 'apercuScorm'])->name('lectures.apercu-scorm');
             Route::delete('/lectures/{lecture}', [ModuleBuilderController::class, 'destroyLecture'])->name('lectures.destroy');
             Route::post('/lectures/{lecture}/duplicate', [ModuleBuilderController::class, 'duplicateLecture'])->name('lectures.duplicate');
             Route::post('/sections/{section}/lectures/reorder', [ModuleBuilderController::class, 'reorderLectures'])->name('lectures.reorder');
