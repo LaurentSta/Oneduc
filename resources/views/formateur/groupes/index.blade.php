@@ -5,48 +5,25 @@
 {{-- Wrapper unique pour en-tête + contenu --}}
 <div class="max-w-[1285px] mx-auto px-8">
 
-  {{-- 🧩 EN-TÊTE DE PAGE FORMATEUR – Groupes --}}
-  <div class="rounded-[20px] border border-gray-100 bg-white shadow-md mb-6">
-    <div class="grid gap-6 px-6 py-6 md:px-8 md:py-7 lg:grid-cols-12 lg:items-center">
-
-      {{-- Bloc texte --}}
-      <div class="lg:col-span-8">
-        {{-- 📍 Fil d’Ariane --}}
-        <x-oneduc.breadcrumb :items="[['label' => 'Accueil', 'url' => route('formateur.dashboard')], ['label' => 'Mes groupes']]" />
-
-        <h1 class="font-raleway text-2xl font-medium leading-tight text-bleuone md:text-3xl">
-          Mes groupes de formation
-        </h1>
-        <p class="mt-0.5 font-varela text-base text-orangeone md:text-lg">
-          Gérez facilement vos groupes, formations et stagiaires.
-        </p>
-        <p class="mt-3 max-w-2xl font-lisible text-sm leading-relaxed text-slate-700">
-          Retrouvez ici tous vos groupes. Vous pouvez les modifier, leur associer des formations ou ajouter des stagiaires.
-        </p>
-
-        {{-- 📊 Statistiques --}}
-        <div class="mt-4 flex flex-wrap gap-2 text-xs font-varela">
-          <span class="inline-flex items-center gap-1.5 rounded-full border border-bleuone/15 bg-bleuone/5 px-3 py-1 text-bleuone">
-            {{ $groupes->count() }} groupes
-          </span>
-          <span class="inline-flex items-center gap-1.5 rounded-full border border-vertone/20 bg-vertone/10 px-3 py-1 text-vertone">
-            {{ $groupes->where('is_active', true)->count() }} actifs
-          </span>
-          <span class="inline-flex items-center gap-1.5 rounded-full border border-orangeone/20 bg-orangeone/10 px-3 py-1 text-orangeone">
-            {{ $groupes->sum(fn ($groupe) => $groupe->students->count()) }} stagiaires
-          </span>
-        </div>
-      </div>
-
-      {{-- Bloc image --}}
-      <div class="lg:col-span-4 flex justify-center lg:justify-end">
-        <img src="{{ asset('images/svg/Groupes.svg') }}"
-             alt="Illustration des groupes de formation"
-             class="max-w-[220px] h-auto">
-      </div>
-
-    </div>
-  </div>
+  <x-formateur.page-header
+    :breadcrumb="[['label' => 'Accueil', 'url' => route('formateur.dashboard')], ['label' => 'Mes groupes']]"
+    title="Mes groupes de formation"
+    subtitle="Gérez facilement vos groupes, formations et stagiaires."
+    :image="asset('images/svg/Groupes.svg')"
+    imageAlt="Illustration des groupes de formation"
+  >
+    <x-slot:badges>
+      <span class="inline-flex items-center gap-1.5 rounded-full border border-bleuone/15 bg-bleuone/5 px-3 py-1 text-bleuone">
+        {{ $groupes->count() }} groupes
+      </span>
+      <span class="inline-flex items-center gap-1.5 rounded-full border border-vertone/20 bg-vertone/10 px-3 py-1 text-vertone">
+        {{ $groupes->where('is_active', true)->count() }} actifs
+      </span>
+      <span class="inline-flex items-center gap-1.5 rounded-full border border-orangeone/20 bg-orangeone/10 px-3 py-1 text-orangeone">
+        {{ $groupes->sum(fn ($groupe) => $groupe->students->count()) }} stagiaires
+      </span>
+    </x-slot:badges>
+  </x-formateur.page-header>
 
 
   {{-- 💼 CONTENU PRINCIPAL --}}

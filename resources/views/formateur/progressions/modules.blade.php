@@ -4,42 +4,19 @@
 
 <div class="max-w-[1285px] mx-auto px-8">
 
-  {{-- EN-TÊTE --}}
-  <div class="rounded-[20px] border border-gray-100 bg-white shadow-md mb-6">
-    <div class="grid gap-6 px-6 py-6 md:px-8 md:py-7 lg:grid-cols-12 lg:items-center">
-
-      <div class="lg:col-span-8">
-        {{-- Fil d’Ariane --}}
-        <x-oneduc.breadcrumb :items="[['label' => 'Accueil', 'url' => route('formateur.dashboard')], ['label' => 'Suivi par formation']]" />
-
-        <h1 class="font-raleway text-2xl font-medium leading-tight text-bleuone md:text-3xl">
-          Suivi par formation
-        </h1>
-        <p class="mt-0.5 font-varela text-base text-orangeone md:text-lg">
-          Analyse des formations utilisées dans vos groupes
-        </p>
-        <p class="mt-3 max-w-2xl font-lisible text-sm leading-relaxed text-slate-700">
-          Cette vue présente uniquement les formations réellement associées à vos groupes.
-          Vous pouvez identifier les formations les plus sollicitées, celles à renforcer
-          et repérer d’éventuelles difficultés pédagogiques.
-        </p>
-
-        {{-- 📊 Statistiques --}}
-        <div class="mt-4 flex flex-wrap gap-2 text-xs font-varela">
-          <span class="inline-flex items-center gap-1.5 rounded-full border border-bleuone/15 bg-bleuone/5 px-3 py-1 text-bleuone">
-            {{ $modules->count() }} formations
-          </span>
-        </div>
-      </div>
-
-      <div class="lg:col-span-4 flex justify-center lg:justify-end">
-        <img src="{{ asset('images/svg/Progressions.svg') }}"
-             alt="Illustration suivi par formation"
-             class="max-w-[220px] h-auto">
-      </div>
-
-    </div>
-  </div>
+  <x-formateur.page-header
+    :breadcrumb="[['label' => 'Accueil', 'url' => route('formateur.dashboard')], ['label' => 'Suivi par formation']]"
+    title="Suivi par formation"
+    subtitle="Analyse des formations utilisées dans vos groupes"
+    :image="asset('images/svg/Progressions.svg')"
+    imageAlt="Illustration suivi par formation"
+  >
+    <x-slot:badges>
+      <span class="inline-flex items-center gap-1.5 rounded-full border border-bleuone/15 bg-bleuone/5 px-3 py-1 text-bleuone">
+        {{ $modules->count() }} formations
+      </span>
+    </x-slot:badges>
+  </x-formateur.page-header>
 
   {{-- ACTIONS --}}
   <div class="flex flex-wrap justify-end gap-3 mb-6">

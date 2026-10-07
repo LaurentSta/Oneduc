@@ -40,6 +40,13 @@ Route::middleware(['auth', 'role:admin', 'admin.activity'])
         Route::get('/lectures/{lecture}/edition', [ConstructeurFormationController::class, 'editLecture'])->name('lectures.edit');
         Route::post('/lectures/{lecture}/generer-audio', [ConstructeurFormationController::class, 'generateAudioLecture'])->name('lectures.generate-audio');
         Route::put('/lectures/{lecture}', [ConstructeurFormationController::class, 'updateLecture'])->name('lectures.update');
+        Route::put('/lectures/{lecture}/pedagogie', [ConstructeurFormationController::class, 'modifierPedagogie'])->name('lectures.pedagogie');
+        Route::post('/lectures/{lecture}/support', [ConstructeurFormationController::class, 'importerSupport'])->name('lectures.support.store');
+        Route::post('/lectures/{lecture}/support/relancer', [ConstructeurFormationController::class, 'relancerSlides'])->name('lectures.support.relancer');
+        Route::get('/lectures/{lecture}/apercu-scorm', [ConstructeurFormationController::class, 'apercuScorm'])->name('lectures.apercu-scorm');
+        Route::post('/lectures/{lecture}/ressources', [ConstructeurFormationController::class, 'ajouterRessource'])->name('lectures.ressources.store');
+        Route::put('/lectures/{lecture}/ressources/{resource}/visibilite', [ConstructeurFormationController::class, 'modifierVisibiliteRessource'])->name('lectures.ressources.visibilite');
+        Route::delete('/lectures/{lecture}/ressources/{resource}', [ConstructeurFormationController::class, 'supprimerRessource'])->name('lectures.ressources.destroy');
         Route::delete('/lectures/{lecture}', [ConstructeurFormationController::class, 'destroyLecture'])->name('lectures.destroy');
         Route::post('/lectures/{lecture}/duplicate', [ConstructeurFormationController::class, 'duplicateLecture'])->name('lectures.duplicate');
         Route::post('/sections/{section}/lectures/reorder', [ConstructeurFormationController::class, 'reorderLectures'])->name('lectures.reorder');

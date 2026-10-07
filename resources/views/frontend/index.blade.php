@@ -5,7 +5,7 @@
 
 @section('home')
 {{-- HERO SECTION --}}
-  <section class="relative overflow-hidden bg-white pt-10 pb-20 lg:pt-20">
+  <section class="relative overflow-hidden bg-white pt-6 pb-20 lg:pt-8">
     <div data-akene-hero class="oneduc-akene-stage" aria-hidden="true">
       <img
         src="{{ asset('frontend/assets/img/front-pages/animations/akene/logo.svg') }}"
@@ -18,7 +18,7 @@
       <div class="flex flex-col lg:flex-row items-center gap-12" >
         
         <div class="oneduc-hero-akene w-full lg:w-1/2 z-10 justify-center md:justify-start">
-          <div class="relative z-10 space-y-8">
+          <div class="relative z-10 space-y-6">
             <h1 class="font-raleway text-bleuone">
               <span class="text-titre block">Outil Numérique Éducatif</span>
               {{-- Sous-titre explicatif pour les nouveaux visiteurs --}}
@@ -45,7 +45,7 @@
 
         <div class="w-full lg:w-1/2 relative">
           {{-- Correction layout : suppression du w-1/2 interne qui réduisait la vidéo à 25% de la largeur --}}
-          <div class="w-full flex justify-center items-center py-10">
+          <div class="w-full flex justify-center items-center py-4 lg:py-0">
             {{--
               La vidéo YouTube n'est chargée qu'après consentement aux cookies
               (ou sur clic explicite, qui vaut action volontaire) : avant ça,
@@ -54,7 +54,7 @@
               (@push('scripts')).
             --}}
             <div
-              class="aspect-video w-full max-w-xl rounded-xl overflow-hidden shadow-lg"
+              class="aspect-video w-full max-w-lg rounded-xl overflow-hidden shadow-lg"
               data-oneduc-consent-video
               data-video-id="Bw4_SlnqZj8"
               data-video-title="Présentation de la plateforme Onéduc"

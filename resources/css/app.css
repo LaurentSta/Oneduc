@@ -173,8 +173,8 @@
 @layer components {
   .oneduc-hero-akene {
     position: relative;
-    min-height: 430px;
-    padding: clamp(1rem, 3vw, 2.75rem) 0;
+    min-height: 340px;
+    padding: clamp(0.5rem, 2vw, 1.5rem) 0;
   }
 
   .oneduc-akene-stage {

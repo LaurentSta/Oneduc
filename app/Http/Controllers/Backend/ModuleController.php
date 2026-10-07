@@ -73,7 +73,7 @@ class ModuleController extends Controller
         }
 
         if ($module->estArchivee()) {
-            return back()->with('error', "Une version archivée ne peut pas être réactivée. Créez une nouvelle version brouillon.");
+            return back()->with('error', 'Une version archivée ne peut pas être réactivée. Créez une nouvelle version brouillon.');
         }
 
         if ($module->estPubliee()) {
@@ -108,7 +108,7 @@ class ModuleController extends Controller
             'module_title' => 'required|string|max:255',
             'formateur_id' => 'nullable|exists:users,id',
             'category_id' => 'required|exists:categories,id',
-            'subcategory_id' => 'nullable|exists:subcategories,id',
+            'subcategory_id' => 'required|exists:subcategories,id',
             'certificat' => 'required|in:1,0',
             'label' => 'nullable|string|max:255',
             'duree' => 'nullable|string|max:100',
@@ -205,7 +205,7 @@ class ModuleController extends Controller
             'module_name' => 'required|string|max:255',
             'module_title' => 'required|string|max:255',
             'category_id' => 'required|integer|exists:categories,id',
-            'subcategory_id' => 'nullable|integer|exists:subcategories,id',
+            'subcategory_id' => 'required|integer|exists:subcategories,id',
             'certificat' => 'required|in:1,0',
             'module_video' => 'nullable|string|max:255',
             'module_video_file' => 'nullable|file|mimes:mp4,m4v,mov,avi,webm|max:307200',
@@ -213,6 +213,8 @@ class ModuleController extends Controller
             'formateur_id' => 'nullable|exists:users,id',
             'module_image' => 'nullable|image|mimes:jpg,jpeg,png|max:2048',
             'header_image' => 'nullable|image|mimes:jpg,jpeg,png|max:2048',
+            'remove_module_image' => 'nullable|boolean',
+            'remove_header_image' => 'nullable|boolean',
             'estimated_question_seconds' => 'nullable|integer|min:1|max:600',
         ]);
 
@@ -232,6 +234,9 @@ class ModuleController extends Controller
             $imageName = time().'_'.Str::slug($request->module_name).'.'.$image->getClientOriginalExtension();
             $image->storeAs('uploads/modules/images', $imageName, 'public');
             $imagePath = 'uploads/modules/images/'.$imageName;
+        } elseif ($request->boolean('remove_module_image') && $module->module_image) {
+            Storage::disk('public')->delete($module->module_image);
+            $imagePath = null;
         }
 
         $headerImagePath = $module->header_image;
@@ -243,6 +248,9 @@ class ModuleController extends Controller
             $headerImageName = time().'_header_'.Str::slug($request->module_name).'.'.$headerImage->getClientOriginalExtension();
             $headerImage->storeAs('uploads/modules/headers', $headerImageName, 'public');
             $headerImagePath = 'uploads/modules/headers/'.$headerImageName;
+        } elseif ($request->boolean('remove_header_image') && $module->header_image) {
+            Storage::disk('public')->delete($module->header_image);
+            $headerImagePath = null;
         }
 
         if ($request->hasFile('module_video_file')) {

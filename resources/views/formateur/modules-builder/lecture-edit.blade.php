@@ -1,116 +1,113 @@
-{{-- Vue d'édition de leçon partagée par les espaces formateur et administrateur. --}}
+{{-- Atelier de conception partagé entre administrateurs et formateurs. --}}
 @php
   $constructeurAdmin = (bool) ($constructeurAdmin ?? false);
-  $layoutConstructeur = $layoutConstructeur ?? ($constructeurAdmin ? 'admin.admin_dashboard' : 'formateur.dashboard');
-  $sectionConstructeur = $sectionConstructeur ?? ($constructeurAdmin ? 'admin' : 'formateur');
-  $nomRoutesConstructeur = $nomRoutesConstructeur ?? ($constructeurAdmin
-      ? 'admin.formations.constructeur'
-      : 'formateur.modules.builder');
-  $etatPublication = $module->publication_state ?? ($module->status ? 'published' : 'draft');
-  $lectureSeule = $constructeurAdmin && in_array($etatPublication, ['published', 'archived'], true);
-  $urlApercuLecon = $urlApercuLecon ?? (
-      $constructeurAdmin
-          ? route($nomRoutesConstructeur.'.preview', ['module' => $module, 'section' => $section->id, 'lecture' => $lecture->id])
-          : route('formateur.formations.lecture', ['module' => $module->id, 'section' => $section->id, 'lecture' => $lecture->id])
-  );
-  $urlPanelLegacy = $constructeurAdmin && ! $lectureSeule && Route::has('admin.lectures.edit')
-      ? route('admin.lectures.edit', $lecture->id)
-      : null;
+  $layoutConstructeur = $constructeurAdmin ? 'admin.admin_dashboard' : 'formateur.dashboard';
+  $sectionConstructeur = $constructeurAdmin ? 'admin' : 'formateur';
+  $nomRoutesConstructeur = $constructeurAdmin ? 'admin.formations.constructeur' : 'formateur.modules.builder';
+  $lectureSeule = $constructeurAdmin && in_array($module->publication_state, ['published', 'archived'], true);
+  $urlApercuLecon = route($nomRoutesConstructeur.'.preview', ['module' => $module, 'section' => $section->id, 'lecture' => $lecture->id]);
+  $supportImporte = in_array($lecture->content_type, ['scorm', 'slides'], true);
 @endphp
-
 @extends($layoutConstructeur)
-
 @section($sectionConstructeur)
-<div class="w-full px-6 lg:px-8">
-
-  <div class="flex items-center gap-4 border-b border-gray-200 py-3">
-    <nav aria-label="Fil d'ariane" class="min-w-0 flex-1 truncate text-sm font-varela text-gray-500">
-      <a href="{{ route($nomRoutesConstructeur.'.index') }}" class="text-orangeone hover:underline">{{ $constructeurAdmin ? 'Catalogue Oneduc' : 'Mes créations' }}</a>
-      <span class="mx-1 text-gray-400">/</span>
-      <a href="{{ route($nomRoutesConstructeur.'.edit', $module) }}" class="text-orangeone hover:underline">{{ $module->module_title }}</a>
-      <span class="mx-1 text-gray-400">/</span>
-      <span class="text-gray-400">{{ $section->section_title }}</span>
-      <span class="mx-1 text-gray-400">/</span>
-      <span class="font-semibold text-bleuone">{{ $lecture->lecture_title }}</span>
-    </nav>
-
-    <div class="flex shrink-0 items-center gap-3">
-      <a href="{{ route($nomRoutesConstructeur.'.edit', $module) }}" class="text-sm font-semibold text-gray-500 hover:text-orangeone">← Retour au plan de la formation</a>
-      <a href="{{ $urlApercuLecon }}"
-         target="_blank" rel="noopener"
-         class="btn-oneduc-outline !px-4 !py-1.5 !text-xs">Aperçu</a>
+<div class="w-full px-4 py-5 lg:px-6">
+  <header class="mb-5 flex flex-wrap items-center justify-between gap-4">
+    <div class="min-w-0">
+      <nav aria-label="Fil d’ariane" class="text-sm text-gray-500">
+        <a href="{{ route($nomRoutesConstructeur.'.index') }}" class="font-semibold text-orangeone hover:underline">{{ $constructeurAdmin ? 'Catalogue Oneduc' : 'Mes créations' }}</a>
+        <span class="mx-1">/</span>
+        <a href="{{ route($nomRoutesConstructeur.'.edit', $module) }}" class="hover:underline">{{ $module->module_title }}</a>
+      </nav>
+      <h1 class="mt-2 font-raleway text-2xl font-bold text-bleuone">Concevoir une leçon</h1>
+      <p class="mt-1 text-sm text-gray-600">Reliez vos objectifs, votre contenu et la vérification des acquis.</p>
     </div>
-  </div>
-
-  @if(session('success'))
-    <div class="mb-6 rounded-[10px] bg-green-50 border border-green-200 px-4 py-3 text-sm text-green-700">
-      {{ session('success') }}
+    <div class="flex flex-wrap gap-3">
+      <a href="{{ route($nomRoutesConstructeur.'.edit', $module) }}" class="btn-oneduc-outline !px-4 !py-2 !text-sm">Plan de la formation</a>
+      <a href="{!! $urlApercuLecon !!}" target="_blank" rel="noopener" class="btn-oneduc !px-4 !py-2 !text-sm">Aperçu apprenant</a>
     </div>
-  @endif
-
-  @if(session('error'))
-    <div class="mb-6 rounded-[10px] bg-red-50 border border-red-200 px-4 py-3 text-sm text-red-700">
-      {{ session('error') }}
-    </div>
-  @endif
-
-  @if($lectureSeule)
-    <div class="mb-6 flex items-start gap-3 rounded-[10px] border border-sky-200 bg-sky-50 px-4 py-3 text-sm text-sky-800" role="status">
-      <i class="ti ti-lock mt-0.5" aria-hidden="true"></i>
-      <p>
-        Cette version {{ $etatPublication === 'archived' ? 'archivée' : 'publiée' }} est en lecture seule afin de préserver les progressions.
-        Créez une nouvelle version depuis le plan de la formation pour la modifier.
-      </p>
-    </div>
-  @endif
-
-  <div class="bg-white rounded-[20px] shadow-md px-10 py-10 mb-8">
-    @if(in_array($lecture->content_type, ['scorm', 'slides'], true))
-      <div class="mb-4 flex items-center gap-2 rounded-[10px] bg-amber-50 border border-amber-200 px-3 py-2 text-xs text-amber-700">
-        <span class="font-bold uppercase">{{ $lecture->content_type === 'slides' ? 'Slides' : 'SCORM' }}</span>
-        <span>Contenu importé depuis le catalogue, non modifiable ici (seul le titre peut être renommé).</span>
-      </div>
-      @if($lectureSeule)
-        <h1 class="font-raleway text-2xl font-bold text-bleuone">{{ $lecture->lecture_title }}</h1>
-      @else
-      <form method="POST" action="{{ route($nomRoutesConstructeur.'.lectures.update', $lecture) }}" class="flex gap-2">
-        @csrf
-        @method('PUT')
-        <input type="text" name="lecture_title" value="{{ $lecture->lecture_title }}" required maxlength="255"
-               class="flex-1 border-0 bg-transparent p-0 font-raleway text-2xl font-bold text-bleuone focus:outline-none focus:ring-0">
-        <button type="submit" class="shrink-0 rounded-[8px] border border-gray-300 bg-white px-3 py-1.5 text-xs font-bold text-gray-600 hover:bg-gray-50">Renommer</button>
-      </form>
-      @endif
-      @if($urlPanelLegacy)
-        <div class="mt-5 rounded-[12px] border border-gray-200 bg-gray-50 p-4">
-          <p class="text-sm font-semibold text-bleuone">Panneau spécialisé {{ strtoupper($lecture->content_type) }}</p>
-          <p class="mt-1 text-xs text-gray-600">Le paquet historique reste dans son format d'origine afin d'éviter toute perte de contenu.</p>
-          <a href="{{ $urlPanelLegacy }}" class="btn-oneduc-outline mt-3 !px-4 !py-2 !text-xs">
-            Gérer le contenu {{ strtoupper($lecture->content_type) }}
-          </a>
-        </div>
-      @endif
-    @elseif($lectureSeule)
-      <h1 class="font-raleway text-2xl font-bold text-bleuone">{{ $lecture->lecture_title }}</h1>
-      <div class="mt-8">
-        @forelse($initialBlocks ?? [] as $block)
-          @include('shared.lecture_block_single', ['block' => $block, 'lecture' => $lecture])
-        @empty
-          <p class="rounded-[10px] bg-gray-50 px-4 py-6 text-center text-sm text-gray-500">Cette leçon ne contient encore aucun bloc.</p>
-        @endforelse
-      </div>
-    @else
-      <div data-block-editor
-           data-lecture-id="{{ $lecture->id }}"
-           data-update-url="{{ route($nomRoutesConstructeur.'.lectures.update', $lecture) }}"
-           data-upload-url="{{ route($nomRoutesConstructeur.'.images.store', $module) }}"
-           data-video-upload-url="{{ route($nomRoutesConstructeur.'.videos.store', $module) }}"
-           data-audio-upload-url="{{ route($nomRoutesConstructeur.'.audios.store', $module) }}"
-           data-audio-generate-url="{{ route($nomRoutesConstructeur.'.lectures.generate-audio', $lecture) }}"
-           data-scorm-upload-url="{{ route($nomRoutesConstructeur.'.scorm.store', $module) }}"
-           data-initial-title="{{ $lecture->lecture_title }}"
-           data-initial-blocks="{{ json_encode($initialBlocks ?? []) }}"></div>
+  </header>
+  @foreach(['success' => 'green', 'error' => 'red'] as $type => $couleur)
+    @if(session($type))
+      <p role="status" class="mb-4 rounded-[12px] border px-4 py-3 text-sm {{ $type === 'success' ? 'border-green-200 bg-green-50 text-green-800' : 'border-red-200 bg-red-50 text-red-800' }}">{{ session($type) }}</p>
     @endif
+  @endforeach
+  @if($errors->any())
+    <div role="alert" class="mb-4 rounded-[12px] border border-red-200 bg-red-50 p-4 text-sm text-red-800">
+      <p class="font-semibold">Vérifiez les informations suivantes :</p>
+      <ul class="mt-2 list-inside list-disc">@foreach($errors->all() as $erreur)<li>{{ $erreur }}</li>@endforeach</ul>
+    </div>
+  @endif
+  @if($lectureSeule)
+    <p role="status" class="mb-4 rounded-[12px] border border-sky-200 bg-sky-50 p-4 text-sm text-sky-800">Cette version est en lecture seule. Créez une nouvelle version depuis le plan pour la modifier.</p>
+  @endif
+  <div class="grid items-start gap-5 xl:grid-cols-[220px_minmax(0,1fr)]">
+    <aside class="rounded-[20px] bg-white p-4 shadow-md xl:sticky xl:top-5" aria-label="Plan de la formation">
+      <details open>
+        <summary class="cursor-pointer font-varela font-bold text-bleuone">Plan de la formation</summary>
+        <div class="mt-4 space-y-4">
+          @foreach($module->sections as $chapitre)
+            <section>
+              <h2 class="px-2 text-xs font-semibold text-gray-500">{{ $chapitre->section_title }}</h2>
+              <ul class="mt-2 space-y-1">
+                @foreach($chapitre->lectures as $leconPlan)
+                  <li>
+                    <a href="{{ route($nomRoutesConstructeur.'.lectures.edit', $leconPlan) }}"
+                       @if($leconPlan->id === $lecture->id) aria-current="page" @endif
+                       class="block rounded-[10px] px-3 py-2 text-sm {{ $leconPlan->id === $lecture->id ? 'bg-bleuone font-semibold text-white' : 'text-gray-700 hover:bg-gray-100' }}">{{ $leconPlan->lecture_title }}</a>
+                  </li>
+                @endforeach
+              </ul>
+            </section>
+          @endforeach
+        </div>
+      </details>
+    </aside>
+    <div class="grid min-w-0 items-start gap-5 2xl:grid-cols-[minmax(0,1fr)_320px]">
+      <main class="min-w-0">
+        <div class="rounded-[20px] bg-white p-5 shadow-md sm:p-7">
+          <p class="mb-4 text-xs font-semibold text-gray-500">{{ $section->section_title }}</p>
+          @if($supportImporte || $lectureSeule)
+            @if($lectureSeule)
+              <h2 class="mb-5 font-raleway text-xl font-bold text-bleuone">{{ $lecture->lecture_title }}</h2>
+            @else
+              <form method="POST" action="{{ route($nomRoutesConstructeur.'.lectures.update', $lecture) }}" class="mb-5 flex flex-wrap gap-2">
+                @csrf @method('PUT')
+                <label for="titre-lecon" class="sr-only">Titre de la leçon</label>
+                <input id="titre-lecon" name="lecture_title" value="{{ old('lecture_title', $lecture->lecture_title) }}" required maxlength="255" class="min-w-0 flex-1 rounded-[10px] border-gray-300 text-sm font-semibold">
+                <button type="submit" class="btn-oneduc-outline !px-3 !py-2 !text-sm">Enregistrer le titre</button>
+              </form>
+            @endif
+            @if($supportImporte)
+              @include('shared.formations-constructeur.support-lecon')
+            @else
+              @foreach($initialBlocks as $block)
+                @include('shared.lecture_block_single', ['block' => $block, 'lecture' => $lecture, 'apercu' => true])
+              @endforeach
+            @endif
+          @else
+            <p class="mb-4 text-xs text-gray-500">Le contenu est enregistré automatiquement. Les réglages pédagogiques disposent de leur bouton d’enregistrement.</p>
+            <div data-block-editor
+                 data-lecture-id="{{ $lecture->id }}"
+                 data-update-url="{{ route($nomRoutesConstructeur.'.lectures.update', $lecture) }}"
+                 data-upload-url="{{ route($nomRoutesConstructeur.'.images.store', $module) }}"
+                 data-video-upload-url="{{ route($nomRoutesConstructeur.'.videos.store', $module) }}"
+                 data-audio-upload-url="{{ route($nomRoutesConstructeur.'.audios.store', $module) }}"
+                 data-audio-generate-url="{{ route($nomRoutesConstructeur.'.lectures.generate-audio', $lecture) }}"
+                 data-scorm-upload-url="{{ route($nomRoutesConstructeur.'.scorm.store', $module) }}"
+                 data-initial-title="{{ $lecture->lecture_title }}"
+                 data-initial-blocks="{{ json_encode($initialBlocks) }}"></div>
+            @if(empty($initialBlocks))
+              <details class="mt-6" data-import-support>
+                <summary class="cursor-pointer text-sm font-semibold text-bleuone">Ou importer une présentation / un contenu SCORM</summary>
+                <div class="mt-3">@include('shared.formations-constructeur.support-lecon')</div>
+              </details>
+            @endif
+          @endif
+        </div>
+        @include('shared.formations-constructeur.ressources-lecon')
+      </main>
+      @include('shared.formations-constructeur.pedagogie-lecon')
+    </div>
   </div>
 </div>
 @endsection

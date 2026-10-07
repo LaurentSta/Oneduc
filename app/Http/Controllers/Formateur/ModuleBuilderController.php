@@ -3,6 +3,8 @@
 namespace App\Http\Controllers\Formateur;
 
 use App\Domains\ModulesFormateur\Actions\AssignerGroupesModule;
+use App\Domains\ModulesFormateur\Actions\ImporterSupportLecon;
+use App\Domains\ModulesFormateur\Actions\ModifierPedagogieLecon;
 use App\Domains\ModulesFormateur\Actions\CreerChapitre;
 use App\Domains\ModulesFormateur\Actions\CreerLecon;
 use App\Domains\ModulesFormateur\Actions\CreerModule;
@@ -426,13 +428,53 @@ class ModuleBuilderController extends Controller
     {
         $this->access->assertOwner($lecture->module);
 
-        $lecture->load('section');
+        return view('formateur.modules-builder.lecture-edit', $this->payloads->conception($lecture));
+    }
 
-        return view('formateur.modules-builder.lecture-edit', [
-            'module' => $lecture->module,
-            'section' => $lecture->section,
+    public function modifierPedagogie(Request $request, ModuleLecture $lecture, ModifierPedagogieLecon $action)
+    {
+        $this->access->assertOwner($lecture->module);
+        $action->execute($lecture, $request->all());
+
+        return back()->with('success', 'Réglages pédagogiques enregistrés.');
+    }
+
+    public function importerSupport(Request $request, ModuleLecture $lecture, ImporterSupportLecon $action)
+    {
+        $this->access->assertOwner($lecture->module);
+        $action->execute($lecture, $request);
+
+        return back()->with('success', 'Support importé. Les présentations sont converties en arrière-plan.');
+    }
+
+    public function relancerSlides(ModuleLecture $lecture, ImporterSupportLecon $action)
+    {
+        $this->access->assertOwner($lecture->module);
+        $action->relancer($lecture);
+
+        return back()->with('success', 'Conversion relancée.');
+    }
+
+    public function preview(Request $request, Module $module)
+    {
+        $this->access->assertOwner($module);
+        $module->load(['sections.lectures' => fn ($query) => $query->orderBy('position')->orderBy('id')]);
+        $section = $module->sections->firstWhere('id', $request->integer('section')) ?? $module->sections->first();
+        $lecture = $section?->lectures->firstWhere('id', $request->integer('lecture')) ?? $section?->lectures->first();
+        if (! $lecture) {
+            return back()->with('error', 'Ajoutez une leçon pour ouvrir l’aperçu.');
+        }
+
+        return view('shared.formations-constructeur.apercu', $this->payloads->apercu($lecture));
+    }
+
+    public function apercuScorm(Request $request, ModuleLecture $lecture)
+    {
+        $this->access->assertOwner($lecture->module);
+
+        return view('shared.scorm-apercu', [
             'lecture' => $lecture,
-            'initialBlocks' => $this->payloads->resolvedContentBlocks($lecture),
+            'scormUrl' => $this->payloads->urlScormApercu($lecture, $request->query('bloc')),
         ]);
     }
 

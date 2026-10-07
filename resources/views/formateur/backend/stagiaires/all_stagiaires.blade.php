@@ -6,45 +6,22 @@
 {{-- Wrapper unique --}}
 <div class="max-w-[1285px] mx-auto px-8">
 
-  {{-- 🧩 EN-TÊTE DE PAGE FORMATEUR – Stagiaires --}}
-  <div class="rounded-[20px] border border-gray-100 bg-white shadow-md mb-6">
-    <div class="grid gap-6 px-6 py-6 md:px-8 md:py-7 lg:grid-cols-12 lg:items-center">
-
-      {{-- Bloc texte --}}
-      <div class="lg:col-span-8">
-        {{-- 📍 Fil d’Ariane --}}
-        <x-oneduc.breadcrumb :items="[['label' => 'Accueil', 'url' => route('formateur.dashboard')], ['label' => 'Mes stagiaires']]" />
-
-        <h1 class="font-raleway text-2xl font-medium leading-tight text-bleuone md:text-3xl">
-          Mes stagiaires
-        </h1>
-        <p class="mt-0.5 font-varela text-base text-orangeone md:text-lg">
-          Gérer l’ensemble de vos apprenants en un coup d’œil.
-        </p>
-        <p class="mt-3 max-w-2xl font-lisible text-sm leading-relaxed text-slate-700">
-          Depuis cette page, vous pouvez modifier, supprimer ou filtrer les stagiaires rattachés à vos groupes.
-        </p>
-
-        {{-- 📊 Statistiques --}}
-        <div class="mt-4 flex flex-wrap gap-2 text-xs font-varela">
-          <span class="inline-flex items-center gap-1.5 rounded-full border border-bleuone/15 bg-bleuone/5 px-3 py-1 text-bleuone">
-            {{ $stagiaires->total() }} stagiaires
-          </span>
-          <span class="inline-flex items-center gap-1.5 rounded-full border border-orangeone/20 bg-orangeone/10 px-3 py-1 text-orangeone">
-            {{ $groupes->count() }} groupes
-          </span>
-        </div>
-      </div>
-
-      {{-- Bloc image --}}
-      <div class="lg:col-span-4 flex justify-center lg:justify-end">
-        <img src="{{ asset('images/svg/header/StagiairesBis.svg') }}"
-             alt="Illustration des stagiaires"
-             class="max-w-[220px] h-auto">
-      </div>
-
-    </div>
-  </div>
+  <x-formateur.page-header
+    :breadcrumb="[['label' => 'Accueil', 'url' => route('formateur.dashboard')], ['label' => 'Mes stagiaires']]"
+    title="Mes stagiaires"
+    subtitle="Gérer l’ensemble de vos apprenants en un coup d’œil."
+    :image="asset('images/svg/header/Stagiaires.svg')"
+    imageAlt="Illustration des stagiaires"
+  >
+    <x-slot:badges>
+      <span class="inline-flex items-center gap-1.5 rounded-full border border-bleuone/15 bg-bleuone/5 px-3 py-1 text-bleuone">
+        {{ $stagiaires->total() }} stagiaires
+      </span>
+      <span class="inline-flex items-center gap-1.5 rounded-full border border-orangeone/20 bg-orangeone/10 px-3 py-1 text-orangeone">
+        {{ $groupes->count() }} groupes
+      </span>
+    </x-slot:badges>
+  </x-formateur.page-header>
 
   {{-- 📋 CONTENU PRINCIPAL --}}
   <main class="space-y-8">

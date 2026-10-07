@@ -61,7 +61,7 @@
                     class="{{ $navBaseClasses }} {{ $isGroupesActive ? $navActiveClasses : $navIdleClasses }}"
                     aria-current="{{ $isGroupesActive ? 'page' : 'false' }}"
                 >
-                    <img src="{{ asset('images/svg/IconeMenu/MenuGroupe.svg') }}" alt="" aria-hidden="true" width="46" height="46" class="mb-1">
+                    <img src="{{ asset('images/svg/IconeMenu/MenuGroupe.svg') }}" alt="" aria-hidden="true" class="mb-0 h-20 w-20 object-contain">
                     <span class="text-[17px] font-medium">Groupes</span>
                 </a>
 
@@ -79,7 +79,7 @@
                     class="{{ $navBaseClasses }} {{ $isFormationsActive ? $navActiveClasses : $navIdleClasses }}"
                     aria-current="{{ $isFormationsActive ? 'page' : 'false' }}"
                 >
-                    <img src="{{ asset('images/svg/IconeMenu/MenuFormation.svg') }}" alt="" aria-hidden="true" width="46" height="46" class="mb-1">
+                    <img src="{{ asset('images/svg/IconeMenu/MenuFormation.svg') }}" alt="" aria-hidden="true" class="mb-0 h-20 w-20 object-contain">
                     <span class="text-[17px] font-medium">Formations</span>
                 </a>
 
@@ -88,7 +88,7 @@
                     class="{{ $navBaseClasses }} {{ $isOutilsActive ? $navActiveClasses : $navIdleClasses }}"
                     aria-current="{{ $isOutilsActive ? 'page' : 'false' }}"
                 >
-                    <img src="{{ asset('images/svg/IconeMenu/MenuOutils.svg') }}" alt="" aria-hidden="true" width="46" height="46" class="mb-1">
+                    <img src="{{ asset('images/svg/IconeMenu/MenuOutils.svg') }}" alt="" aria-hidden="true" class="mb-0 h-20 w-20 object-contain">
                     <span class="text-[17px] font-medium">Outils</span>
                 </a>
 
@@ -97,7 +97,7 @@
                     class="{{ $navBaseClasses }} {{ $isProgressionActive ? $navActiveClasses : $navIdleClasses }}"
                     aria-current="{{ $isProgressionActive ? 'page' : 'false' }}"
                 >
-                    <img src="{{ asset('images/svg/IconeMenu/MenuProgression.svg') }}" alt="" aria-hidden="true" width="46" height="46" class="mb-1">
+                    <img src="{{ asset('images/svg/IconeMenu/MenuProgression.svg') }}" alt="" aria-hidden="true" class="mb-0 h-20 w-20 object-contain">
                     <span class="text-[17px] font-medium">Progression</span>
                 </a>
             </div>

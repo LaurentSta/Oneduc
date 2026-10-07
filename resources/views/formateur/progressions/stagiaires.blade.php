@@ -5,46 +5,22 @@
 {{-- Wrapper unique --}}
 <div class="max-w-[1285px] mx-auto px-8">
 
-  {{-- EN-TÊTE --}}
-  <div class="rounded-[20px] border border-gray-100 bg-white shadow-md mb-6">
-    <div class="grid gap-6 px-6 py-6 md:px-8 md:py-7 lg:grid-cols-12 lg:items-center">
-
-      {{-- Texte --}}
-      <div class="lg:col-span-8">
-        {{-- Fil d’Ariane --}}
-        <x-oneduc.breadcrumb :items="[['label' => 'Accueil', 'url' => route('formateur.dashboard')], ['label' => 'Progression']]" />
-
-        <h1 class="font-raleway text-2xl font-medium leading-tight text-bleuone md:text-3xl">
-          Progression des stagiaires
-        </h1>
-        <p class="mt-0.5 font-varela text-base text-orangeone md:text-lg">
-          Suivi individuel des apprenants
-        </p>
-        <p class="mt-3 max-w-2xl font-lisible text-sm leading-relaxed text-slate-700">
-          Cette vue vous permet de repérer rapidement les stagiaires actifs, ceux qui progressent,
-          et ceux qui ont besoin d’un accompagnement.
-        </p>
-
-        {{-- 📊 Statistiques --}}
-        <div class="mt-4 flex flex-wrap gap-2 text-xs font-varela">
-          <span class="inline-flex items-center gap-1.5 rounded-full border border-bleuone/15 bg-bleuone/5 px-3 py-1 text-bleuone">
-            {{ $stagiaires->total() }} stagiaires
-          </span>
-          <span class="inline-flex items-center gap-1.5 rounded-full border border-orangeone/20 bg-orangeone/10 px-3 py-1 text-orangeone">
-            {{ $groupes->count() }} groupes
-          </span>
-        </div>
-      </div>
-
-      {{-- Illustration --}}
-      <div class="lg:col-span-4 flex justify-center lg:justify-end">
-        <img src="{{ asset('images/svg/header/Progression.svg') }}"
-             alt="Illustration progression des stagiaires"
-             class="max-w-[220px] h-auto">
-      </div>
-
-    </div>
-  </div>
+  <x-formateur.page-header
+    :breadcrumb="[['label' => 'Accueil', 'url' => route('formateur.dashboard')], ['label' => 'Progression']]"
+    title="Progression des stagiaires"
+    subtitle="Suivi individuel des apprenants"
+    :image="asset('images/svg/header/Progression.svg')"
+    imageAlt="Illustration progression des stagiaires"
+  >
+    <x-slot:badges>
+      <span class="inline-flex items-center gap-1.5 rounded-full border border-bleuone/15 bg-bleuone/5 px-3 py-1 text-bleuone">
+        {{ $stagiaires->total() }} stagiaires
+      </span>
+      <span class="inline-flex items-center gap-1.5 rounded-full border border-orangeone/20 bg-orangeone/10 px-3 py-1 text-orangeone">
+        {{ $groupes->count() }} groupes
+      </span>
+    </x-slot:badges>
+  </x-formateur.page-header>
 
   {{-- CONTENU --}}
   <main class="space-y-6">

@@ -4,39 +4,19 @@
 
 <div class="max-w-[1285px] mx-auto px-8">
 
-  {{-- EN-TÊTE --}}
-  <div class="rounded-[20px] border border-gray-100 bg-white shadow-md mb-6">
-    <div class="grid gap-6 px-6 py-6 md:px-8 md:py-7 lg:grid-cols-12 lg:items-center">
-
-      <div class="lg:col-span-8">
-        <x-oneduc.breadcrumb :items="[['label' => 'Accueil', 'url' => route('formateur.dashboard')], ['label' => 'Progression par groupe']]" />
-
-        <h1 class="font-raleway text-2xl font-medium leading-tight text-bleuone md:text-3xl">
-          Progression par groupe
-        </h1>
-        <p class="mt-0.5 font-varela text-base text-orangeone md:text-lg">
-          Suivez l’avancement des groupes et repérez ceux qui ont besoin d’accompagnement.
-        </p>
-        <p class="mt-3 max-w-2xl font-lisible text-sm leading-relaxed text-slate-700">
-          Cette vue synthétise l’activité par groupe : stagiaires, formations, leçons terminées, temps total passé et taux de réussite.
-        </p>
-
-        {{-- 📊 Statistiques --}}
-        <div class="mt-4 flex flex-wrap gap-2 text-xs font-varela">
-          <span class="inline-flex items-center gap-1.5 rounded-full border border-bleuone/15 bg-bleuone/5 px-3 py-1 text-bleuone">
-            {{ $totalGroupes }} groupes
-          </span>
-        </div>
-      </div>
-
-      <div class="lg:col-span-4 flex justify-center lg:justify-end">
-        <img src="{{ asset('images/svg/header/Progression.svg') }}"
-             alt="Illustration progression par groupe"
-             class="max-w-[220px] h-auto">
-      </div>
-
-    </div>
-  </div>
+  <x-formateur.page-header
+    :breadcrumb="[['label' => 'Accueil', 'url' => route('formateur.dashboard')], ['label' => 'Progression par groupe']]"
+    title="Progression par groupe"
+    subtitle="Suivez l’avancement des groupes et repérez ceux qui ont besoin d’accompagnement."
+    :image="asset('images/svg/header/Progression.svg')"
+    imageAlt="Illustration progression par groupe"
+  >
+    <x-slot:badges>
+      <span class="inline-flex items-center gap-1.5 rounded-full border border-bleuone/15 bg-bleuone/5 px-3 py-1 text-bleuone">
+        {{ $totalGroupes }} groupes
+      </span>
+    </x-slot:badges>
+  </x-formateur.page-header>
 
   <main class="space-y-8">
 

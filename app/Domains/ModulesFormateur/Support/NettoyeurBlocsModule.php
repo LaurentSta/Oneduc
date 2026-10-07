@@ -108,7 +108,11 @@ class NettoyeurBlocsModule
                         'type' => 'image',
                         'media_id' => $mediaId,
                         'caption' => Str::limit(strip_tags((string) ($block['caption'] ?? '')), 255, ''),
-                    ];
+                    ] + (array_key_exists('alt', $block) ? [
+                        'alt' => Str::limit(strip_tags(is_string($block['alt']) ? $block['alt'] : ''), 512, ''),
+                    ] : []) + (array_key_exists('decorative', $block) ? [
+                        'decorative' => filter_var($block['decorative'], FILTER_VALIDATE_BOOLEAN),
+                    ] : []);
                     break;
 
                 case 'quote':
@@ -132,7 +136,9 @@ class NettoyeurBlocsModule
                         'type' => 'video',
                         'url' => $url,
                         'caption' => Str::limit(strip_tags((string) ($block['caption'] ?? '')), 255, ''),
-                    ];
+                    ] + (array_key_exists('transcript', $block) ? [
+                        'transcript' => Str::limit(strip_tags(is_string($block['transcript']) ? $block['transcript'] : ''), 20000, ''),
+                    ] : []);
                     break;
 
                 case 'audio':
@@ -144,7 +150,9 @@ class NettoyeurBlocsModule
                         'type' => 'audio',
                         'media_id' => $mediaId,
                         'caption' => Str::limit(strip_tags((string) ($block['caption'] ?? '')), 255, ''),
-                    ];
+                    ] + (array_key_exists('transcript', $block) ? [
+                        'transcript' => Str::limit(strip_tags(is_string($block['transcript']) ? $block['transcript'] : ''), 20000, ''),
+                    ] : []);
                     break;
 
                 case 'divider':
