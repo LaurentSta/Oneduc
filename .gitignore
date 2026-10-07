@@ -87,6 +87,10 @@ storage/*.key
 !/public/scorm_core/
 !/public/scorm_core/**
 
+# Moteurs réutilisables d'activités interactives (code source, pas du contenu importé)
+!/public/activites-interactives/
+!/public/activites-interactives/**
+
 # === Si ces dossiers contiennent uniquement du statique livré ===
 !/public/backend/
 !/public/backend/**

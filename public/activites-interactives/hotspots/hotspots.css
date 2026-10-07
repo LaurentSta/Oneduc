@@ -1,0 +1,152 @@
+/*
+ * Moteur réutilisable "points interactifs sur une image".
+ * Partagé par toutes les activités du type bureau-windows : ne pas dupliquer
+ * ces règles dans chaque activité, les faire évoluer ici une fois pour toutes.
+ */
+
+.activite-hotspots {
+  --activite-couleur: #0a4d8c;
+  --activite-couleur-claire: #e8f1fb;
+  font-family: system-ui, -apple-system, "Segoe UI", Roboto, sans-serif;
+  color: #1c2733;
+  max-width: 960px;
+  margin: 0 auto;
+  padding: 1.5rem 1rem 2rem;
+  box-sizing: border-box;
+}
+
+.activite-hotspots__titre {
+  font-size: 1.4rem;
+  font-weight: 700;
+  margin: 0 0 .5rem;
+  color: var(--activite-couleur);
+}
+
+.activite-hotspots__intro {
+  margin: 0 0 1rem;
+  line-height: 1.5;
+}
+
+.activite-hotspots__consigne {
+  margin: 0 0 1rem;
+  font-weight: 600;
+}
+
+.activite-hotspots__zone {
+  position: relative;
+  width: 100%;
+  border-radius: 14px;
+  overflow: hidden;
+  box-shadow: 0 2px 10px rgba(0, 0, 0, .15);
+}
+
+.hotspot {
+  position: absolute;
+  transform: translate(-50%, -50%);
+  width: 34px;
+  height: 34px;
+  border: none;
+  border-radius: 50%;
+  background: transparent;
+  padding: 0;
+  cursor: pointer;
+  display: grid;
+  place-items: center;
+}
+
+.hotspot:focus-visible {
+  outline: 3px solid #ffb703;
+  outline-offset: 3px;
+  border-radius: 50%;
+}
+
+.hotspot__halo {
+  width: 18px;
+  height: 18px;
+  border-radius: 50%;
+  background: #ffb703;
+  box-shadow: 0 0 0 0 rgba(255, 183, 3, .6);
+  animation: activite-hotspots-pulse 2.2s ease-out infinite;
+}
+
+.hotspot--decouvert .hotspot__halo {
+  background: #2a9d57;
+  animation: none;
+  box-shadow: 0 0 0 4px rgba(42, 157, 87, .25);
+}
+
+@keyframes activite-hotspots-pulse {
+  0% { box-shadow: 0 0 0 0 rgba(255, 183, 3, .55); }
+  70% { box-shadow: 0 0 0 14px rgba(255, 183, 3, 0); }
+  100% { box-shadow: 0 0 0 0 rgba(255, 183, 3, 0); }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .hotspot__halo {
+    animation: none;
+  }
+}
+
+.activite-hotspots__compteur {
+  margin-top: 1rem;
+  font-weight: 600;
+  color: var(--activite-couleur);
+}
+
+.activite-hotspots__fin {
+  margin-top: .75rem;
+  padding: .75rem 1rem;
+  border-radius: 10px;
+  background: #eaf7ee;
+  color: #1e6b3a;
+  font-weight: 600;
+}
+
+.activite-hotspots__panneau {
+  position: fixed;
+  inset: 0;
+  background: rgba(10, 20, 30, .45);
+  display: grid;
+  place-items: center;
+  padding: 1rem;
+  z-index: 10;
+}
+
+.activite-hotspots__panneau[hidden] {
+  display: none;
+}
+
+.activite-hotspots__panneau-carte {
+  background: #fff;
+  border-radius: 14px;
+  max-width: 380px;
+  width: 100%;
+  padding: 1.25rem 1.25rem 1rem;
+  box-shadow: 0 10px 30px rgba(0, 0, 0, .25);
+}
+
+.activite-hotspots__panneau-titre {
+  margin: 0 0 .5rem;
+  color: var(--activite-couleur);
+  font-size: 1.1rem;
+}
+
+.activite-hotspots__panneau-texte {
+  margin: 0 0 1rem;
+  line-height: 1.5;
+}
+
+.activite-hotspots__panneau-fermer {
+  border: none;
+  background: var(--activite-couleur);
+  color: #fff;
+  padding: .5rem 1rem;
+  border-radius: 8px;
+  font-weight: 600;
+  cursor: pointer;
+}
+
+.activite-hotspots__panneau-fermer:focus-visible {
+  outline: 3px solid #ffb703;
+  outline-offset: 2px;
+}
