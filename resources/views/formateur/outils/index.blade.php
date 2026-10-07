@@ -131,8 +131,10 @@
       <div class="grid grid-cols-2 gap-4 sm:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 2xl:grid-cols-6">
 
     {{-- ── POWERPOINT VERS MODULE ────────────────────────────────────── --}}
-    {{-- Tuile masquée temporairement : affichage incorrect signalé, correctif pas encore déployé. --}}
-    {{--
+    {{-- Désactivé par défaut (affichage incorrect connu, x-show basé sur un ancien
+         système de filtre) — pilotable depuis /admin/outils, pas de correctif du
+         bug d'affichage ici. --}}
+    @if(\App\Support\Outils\EtatsOutils::actif('powerpoint_module'))
     <div x-show="filtre === 'all' || filtre === 'creation'" class="flex flex-col bg-white rounded-[20px] shadow-md overflow-hidden">
       <div class="bg-violet-600 px-6 py-5 flex items-center gap-3">
         <div class="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-white/20">
@@ -189,9 +191,10 @@
         </a>
       </div>
     </div>
-    --}}
+    @endif
 
     {{-- ── NUAGE DE MOTS ──────────────────────────────────────────────── --}}
+    @if(\App\Support\Outils\EtatsOutils::actif('nuage_mots'))
     <x-oneduc.outil-tile
       tool-id="nuage-de-mots"
       :categories="['interaction']"
@@ -238,8 +241,10 @@
         </x-slot:body>
       @endif
     </x-oneduc.outil-tile>
+    @endif
 
     {{-- ── QUIZ EN DIRECT ─────────────────────────────────────────────── --}}
+    @if(\App\Support\Outils\EtatsOutils::actif('quiz_direct'))
     <x-oneduc.outil-tile
       tool-id="quiz"
       :categories="['interaction']"
@@ -266,6 +271,7 @@
         <span class="rounded-full bg-gray-100 px-2.5 py-0.5 font-semibold text-gray-500">Synchrone</span>
       </x-slot:badges>
     </x-oneduc.outil-tile>
+    @endif
 
     {{-- ── BANQUE DE QUESTIONS DE QUIZ ──────────────────────────────────── --}}
     <x-oneduc.outil-tile
@@ -296,6 +302,7 @@
     </x-oneduc.outil-tile>
 
     {{-- ── TABLEAU BLANC ──────────────────────────────────────────────── --}}
+    @if(\App\Support\Outils\EtatsOutils::actif('tableau_blanc'))
     <x-oneduc.outil-tile
       tool-id="tableau-blanc"
       :categories="['collaboration']"
@@ -343,8 +350,10 @@
         @endif
       </x-slot:body>
     </x-oneduc.outil-tile>
+    @endif
 
     {{-- ── MUR DE QUESTIONS ANONYME ─────────────────────────────────── --}}
+    @if(\App\Support\Outils\EtatsOutils::actif('mur_questions'))
     <x-oneduc.outil-tile
       tool-id="mur-questions"
       :categories="['interaction']"
@@ -393,8 +402,10 @@
         </x-slot:body>
       @endif
     </x-oneduc.outil-tile>
+    @endif
 
     {{-- ── SONDAGE ─────────────────────────────────────────────────────── --}}
+    @if(\App\Support\Outils\EtatsOutils::actif('sondage'))
     <x-oneduc.outil-tile
       tool-id="sondage"
       :categories="['interaction']"
@@ -446,9 +457,10 @@
         </x-slot:body>
       @endif
     </x-oneduc.outil-tile>
+    @endif
 
     {{-- ── VRAI OU FAUX ───────────────────────────────────────────────── --}}
-    @if(config('outils.vraifaux.enabled'))
+    @if(\App\Support\Outils\EtatsOutils::actif('vraifaux'))
     <x-oneduc.outil-tile
       tool-id="vrai-faux"
       :categories="['interaction']"
@@ -503,7 +515,7 @@
     @endif
 
     {{-- ── BUZZER QUIZ ───────────────────────────────────────────────── --}}
-    @if(config('outils.buzzer.enabled'))
+    @if(\App\Support\Outils\EtatsOutils::actif('buzzer'))
     <x-oneduc.outil-tile
       tool-id="buzzer"
       :categories="['interaction']"
@@ -555,7 +567,7 @@
     @endif
 
     {{-- ── ÉCHELLE DE POSITIONNEMENT ──────────────────────────────────── --}}
-    @if(config('outils.echelle.enabled'))
+    @if(\App\Support\Outils\EtatsOutils::actif('echelle'))
     <x-oneduc.outil-tile
       tool-id="echelle"
       :categories="['interaction']"
@@ -608,7 +620,7 @@
     @endif
 
     {{-- ── ZONE DE CLIC ───────────────────────────────────────── --}}
-    @if(config('outils.composants.enabled'))
+    @if(\App\Support\Outils\EtatsOutils::actif('composants'))
     <x-oneduc.outil-tile
       tool-id="composants"
       :categories="['interaction']"
@@ -660,6 +672,7 @@
     @endif
 
     {{-- ── ROUE ALÉATOIRE ─────────────────────────────────────────────── --}}
+    @if(\App\Support\Outils\EtatsOutils::actif('roue_aleatoire'))
     <x-oneduc.outil-tile
       tool-id="roue"
       :categories="['animation']"
@@ -686,9 +699,10 @@
         <span class="rounded-full bg-gray-100 px-2.5 py-0.5 font-semibold text-gray-500">Synchrone</span>
       </x-slot:badges>
     </x-oneduc.outil-tile>
+    @endif
 
     {{-- ── MINUTEUR COLLABORATIF ──────────────────────────────────────── --}}
-    @if(config('outils.minuteur.enabled'))
+    @if(\App\Support\Outils\EtatsOutils::actif('minuteur'))
     <x-oneduc.outil-tile
       tool-id="minuteur"
       :categories="['animation']"
@@ -736,6 +750,7 @@
     @endif
 
     {{-- ── ÉMARGEMENT (FEUILLE DE PRÉSENCE) ─────────────────────────────── --}}
+    @if(\App\Support\Outils\EtatsOutils::actif('emargement'))
     <x-oneduc.outil-tile
       tool-id="emargement"
       :categories="[]"
@@ -763,6 +778,7 @@
         <span class="rounded-full bg-gray-100 px-2.5 py-0.5 font-semibold text-gray-500">Administratif</span>
       </x-slot:badges>
     </x-oneduc.outil-tile>
+    @endif
 
     {{-- ── MES MODULES (MODULE BUILDER) ───────────────────────────────── --}}
     <x-oneduc.outil-tile

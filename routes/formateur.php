@@ -96,41 +96,47 @@ Route::middleware(['auth', 'role:formateur', 'association.member'])
         Route::get('/groupes/{id}/edit', [GroupeController::class, 'edit'])->name('groupes.edit');
         Route::put('/groupes/{id}', [GroupeController::class, 'update'])->name('groupes.update');
         Route::delete('/groupes/{id}', [GroupeController::class, 'destroy'])->name('groupes.destroy');
-        Route::prefix('/groupes/{group}/tableau-blanc')
-            ->name('groupes.whiteboard.')
-            ->group(function () {
-                Route::get('/', [WhiteboardController::class, 'show'])->name('show');
-                Route::get('/snapshot', [WhiteboardController::class, 'snapshot'])->name('snapshot');
-                Route::post('/excalidraw-save', [WhiteboardController::class, 'save'])->name('excalidraw.save');
-                Route::post('/items', [WhiteboardController::class, 'upsert'])->name('items.upsert');
-                Route::delete('/items/{item}', [WhiteboardController::class, 'destroy'])->name('items.destroy');
-                Route::post('/clear', [WhiteboardController::class, 'clear'])->name('clear');
-            });
+        if (\App\Support\Outils\EtatsOutils::actif('tableau_blanc')) {
+            Route::prefix('/groupes/{group}/tableau-blanc')
+                ->name('groupes.whiteboard.')
+                ->group(function () {
+                    Route::get('/', [WhiteboardController::class, 'show'])->name('show');
+                    Route::get('/snapshot', [WhiteboardController::class, 'snapshot'])->name('snapshot');
+                    Route::post('/excalidraw-save', [WhiteboardController::class, 'save'])->name('excalidraw.save');
+                    Route::post('/items', [WhiteboardController::class, 'upsert'])->name('items.upsert');
+                    Route::delete('/items/{item}', [WhiteboardController::class, 'destroy'])->name('items.destroy');
+                    Route::post('/clear', [WhiteboardController::class, 'clear'])->name('clear');
+                });
+        }
 
         // ✍️ Émargement (feuille de présence, par groupe)
-        Route::get('/emargement', [EmargementController::class, 'index'])->name('emargement.index');
-        Route::post('/emargement/groupes/{group}/activer', [EmargementController::class, 'activerGroupe'])->name('emargement.activer');
-        Route::post('/emargement/groupes/{group}/desactiver', [EmargementController::class, 'desactiverGroupe'])->name('emargement.desactiver');
-        Route::prefix('/groupes/{group}/emargement')
-            ->name('groupes.emargement.')
-            ->group(function () {
-                Route::post('/', [EmargementController::class, 'store'])->name('store');
-                Route::get('/{seance}', [EmargementController::class, 'show'])->name('show');
-                Route::get('/{seance}/state', [EmargementController::class, 'state'])->name('state');
-                Route::post('/{seance}/ouvrir', [EmargementController::class, 'ouvrir'])->name('ouvrir');
-                Route::post('/{seance}/fermer', [EmargementController::class, 'fermer'])->name('fermer');
-                Route::post('/{seance}/presences/{presence}/corriger', [EmargementController::class, 'corrigerPresence'])->name('presences.corriger');
-                Route::post('/{seance}/presences/ajouter', [EmargementController::class, 'ajouterStagiaire'])->name('presences.ajouter');
-                Route::get('/{seance}/export-pdf', [EmargementController::class, 'exportPdf'])->name('export-pdf');
-            });
+        if (\App\Support\Outils\EtatsOutils::actif('emargement')) {
+            Route::get('/emargement', [EmargementController::class, 'index'])->name('emargement.index');
+            Route::post('/emargement/groupes/{group}/activer', [EmargementController::class, 'activerGroupe'])->name('emargement.activer');
+            Route::post('/emargement/groupes/{group}/desactiver', [EmargementController::class, 'desactiverGroupe'])->name('emargement.desactiver');
+            Route::prefix('/groupes/{group}/emargement')
+                ->name('groupes.emargement.')
+                ->group(function () {
+                    Route::post('/', [EmargementController::class, 'store'])->name('store');
+                    Route::get('/{seance}', [EmargementController::class, 'show'])->name('show');
+                    Route::get('/{seance}/state', [EmargementController::class, 'state'])->name('state');
+                    Route::post('/{seance}/ouvrir', [EmargementController::class, 'ouvrir'])->name('ouvrir');
+                    Route::post('/{seance}/fermer', [EmargementController::class, 'fermer'])->name('fermer');
+                    Route::post('/{seance}/presences/{presence}/corriger', [EmargementController::class, 'corrigerPresence'])->name('presences.corriger');
+                    Route::post('/{seance}/presences/ajouter', [EmargementController::class, 'ajouterStagiaire'])->name('presences.ajouter');
+                    Route::get('/{seance}/export-pdf', [EmargementController::class, 'exportPdf'])->name('export-pdf');
+                });
+        }
 
         // 🌥️ Nuages de mots (parcours, par groupe)
-        Route::prefix('/groupes/{group}/wordcloud')
-            ->name('groupes.wordcloud.')
-            ->group(function () {
-                Route::get('/{item}/live', [GroupeWordCloudController::class, 'live'])->name('live');
-                Route::get('/{item}/data', [GroupeWordCloudController::class, 'liveData'])->name('data');
-            });
+        if (\App\Support\Outils\EtatsOutils::actif('nuage_mots')) {
+            Route::prefix('/groupes/{group}/wordcloud')
+                ->name('groupes.wordcloud.')
+                ->group(function () {
+                    Route::get('/{item}/live', [GroupeWordCloudController::class, 'live'])->name('live');
+                    Route::get('/{item}/data', [GroupeWordCloudController::class, 'liveData'])->name('data');
+                });
+        }
 
         // 🧩 Outils génériques de parcours (buzzer, échelle, vrai/faux, roue, composants)
         Route::prefix('/groupes/{group}/outils')
@@ -164,6 +170,9 @@ Route::middleware(['auth', 'role:formateur', 'association.member'])
         Route::get('/outils-numeriques', [OutilsNumeriquesController::class, 'index'])
             ->name('outils.index');
 
+        // Le garde-fou est dans OutilsPowerPointController (pas ici) : routes toujours
+        // enregistrées, mais inaccessibles (404) quand l'outil est désactivé. Nécessaire
+        // pour rester testable (contrairement à un if ici, évalué une fois au boot).
         Route::prefix('/outils-numeriques/powerpoint')
             ->name('outils.powerpoint.')
             ->group(function () {
@@ -175,56 +184,60 @@ Route::middleware(['auth', 'role:formateur', 'association.member'])
                 Route::post('/{module}/publish', [OutilsPowerPointController::class, 'publish'])->name('publish');
             });
 
-        Route::get('/quiz-en-direct', [OutilsLiveQuizController::class, 'index'])
-            ->name('outils.quiz.index');
-
         Route::get('/banque-de-questions-quiz', [OutilsQuizQuestionsController::class, 'index'])
             ->name('outils.quiz-questions.index');
 
-        Route::prefix('/outils-numeriques/questionnaires')
-            ->name('questionnaires.')
-            ->group(function () {
-                Route::post('/', [QuestionnaireController::class, 'store'])->name('store');
-                Route::delete('/{questionnaire}', [QuestionnaireController::class, 'destroy'])->name('destroy');
-                Route::post('/{questionnaire}/questions', [QuestionnaireController::class, 'storeQuestion'])->name('questions.store');
-                Route::post('/{questionnaire}/questions/generer-ia', [QuestionnaireController::class, 'generateIA'])->name('questions.generate-ia');
-                Route::post('/{questionnaire}/questions/{question}/toggle', [QuestionnaireController::class, 'toggleQuestion'])->name('questions.toggle');
-                Route::delete('/{questionnaire}/questions/{question}', [QuestionnaireController::class, 'destroyQuestion'])->name('questions.destroy');
-            });
+        if (\App\Support\Outils\EtatsOutils::actif('quiz_direct')) {
+            Route::get('/quiz-en-direct', [OutilsLiveQuizController::class, 'index'])
+                ->name('outils.quiz.index');
 
-        Route::prefix('/outils-numeriques/quiz-en-direct')
-            ->name('group-quiz.')
-            ->group(function () {
-                Route::post('/launch', [GroupQuizSessionController::class, 'launch'])->name('launch');
-                Route::get('/{session}', [GroupQuizSessionController::class, 'show'])->name('show');
-                Route::post('/{session}/start', [GroupQuizSessionController::class, 'start'])->name('start');
-                Route::post('/{session}/reveal', [GroupQuizSessionController::class, 'reveal'])->name('reveal');
-                Route::post('/{session}/next', [GroupQuizSessionController::class, 'next'])->name('next');
-                Route::post('/{session}/close', [GroupQuizSessionController::class, 'close'])->name('close');
-                Route::get('/{session}/snapshot', [GroupQuizSessionController::class, 'snapshot'])->name('snapshot');
-                Route::delete('/{session}', [GroupQuizSessionController::class, 'destroy'])->name('destroy');
-            });
+            Route::prefix('/outils-numeriques/questionnaires')
+                ->name('questionnaires.')
+                ->group(function () {
+                    Route::post('/', [QuestionnaireController::class, 'store'])->name('store');
+                    Route::delete('/{questionnaire}', [QuestionnaireController::class, 'destroy'])->name('destroy');
+                    Route::post('/{questionnaire}/questions', [QuestionnaireController::class, 'storeQuestion'])->name('questions.store');
+                    Route::post('/{questionnaire}/questions/generer-ia', [QuestionnaireController::class, 'generateIA'])->name('questions.generate-ia');
+                    Route::post('/{questionnaire}/questions/{question}/toggle', [QuestionnaireController::class, 'toggleQuestion'])->name('questions.toggle');
+                    Route::delete('/{questionnaire}/questions/{question}', [QuestionnaireController::class, 'destroyQuestion'])->name('questions.destroy');
+                });
+
+            Route::prefix('/outils-numeriques/quiz-en-direct')
+                ->name('group-quiz.')
+                ->group(function () {
+                    Route::post('/launch', [GroupQuizSessionController::class, 'launch'])->name('launch');
+                    Route::get('/{session}', [GroupQuizSessionController::class, 'show'])->name('show');
+                    Route::post('/{session}/start', [GroupQuizSessionController::class, 'start'])->name('start');
+                    Route::post('/{session}/reveal', [GroupQuizSessionController::class, 'reveal'])->name('reveal');
+                    Route::post('/{session}/next', [GroupQuizSessionController::class, 'next'])->name('next');
+                    Route::post('/{session}/close', [GroupQuizSessionController::class, 'close'])->name('close');
+                    Route::get('/{session}/snapshot', [GroupQuizSessionController::class, 'snapshot'])->name('snapshot');
+                    Route::delete('/{session}', [GroupQuizSessionController::class, 'destroy'])->name('destroy');
+                });
+        }
 
         Route::redirect('/sondages', '/formateur/outils-numeriques/sondages', 301);
 
-        Route::prefix('/outils-numeriques/sondages')->name('sondages.')->group(function () {
-            Route::get('/', [OutilsSondageController::class, 'index'])->name('index');
-            Route::post('/launch', [OutilsSondageController::class, 'launch'])->name('launch');
-            Route::get('/{pollSession}', [OutilsSondageController::class, 'show'])->name('show');
-            Route::post('/{pollSession}/toggle', [OutilsSondageController::class, 'toggle'])->name('toggle');
-            Route::get('/{pollSession}/state', [OutilsSondageController::class, 'state'])->name('state');
-        });
-
-        Route::prefix('/outils-numeriques/sondage-questionnaires')
-            ->name('sondage-questionnaires.')
-            ->group(function () {
-                Route::post('/', [PollQuestionnaireController::class, 'store'])->name('store');
-                Route::delete('/{questionnaire}', [PollQuestionnaireController::class, 'destroy'])->name('destroy');
-                Route::post('/{questionnaire}/questions', [PollQuestionnaireController::class, 'storeQuestion'])->name('questions.store');
-                Route::delete('/{questionnaire}/questions/{index}', [PollQuestionnaireController::class, 'destroyQuestion'])->name('questions.destroy');
+        if (\App\Support\Outils\EtatsOutils::actif('sondage')) {
+            Route::prefix('/outils-numeriques/sondages')->name('sondages.')->group(function () {
+                Route::get('/', [OutilsSondageController::class, 'index'])->name('index');
+                Route::post('/launch', [OutilsSondageController::class, 'launch'])->name('launch');
+                Route::get('/{pollSession}', [OutilsSondageController::class, 'show'])->name('show');
+                Route::post('/{pollSession}/toggle', [OutilsSondageController::class, 'toggle'])->name('toggle');
+                Route::get('/{pollSession}/state', [OutilsSondageController::class, 'state'])->name('state');
             });
 
-        if (config('outils.vraifaux.enabled')) {
+            Route::prefix('/outils-numeriques/sondage-questionnaires')
+                ->name('sondage-questionnaires.')
+                ->group(function () {
+                    Route::post('/', [PollQuestionnaireController::class, 'store'])->name('store');
+                    Route::delete('/{questionnaire}', [PollQuestionnaireController::class, 'destroy'])->name('destroy');
+                    Route::post('/{questionnaire}/questions', [PollQuestionnaireController::class, 'storeQuestion'])->name('questions.store');
+                    Route::delete('/{questionnaire}/questions/{index}', [PollQuestionnaireController::class, 'destroyQuestion'])->name('questions.destroy');
+                });
+        }
+
+        if (\App\Support\Outils\EtatsOutils::actif('vraifaux')) {
             Route::prefix('/vrai-faux')->name('vraifaux.')->group(function () {
                 Route::get('/', [OutilsVraiFauxController::class, 'index'])->name('index');
                 Route::post('/', [OutilsVraiFauxController::class, 'store'])->name('store');
@@ -234,7 +247,7 @@ Route::middleware(['auth', 'role:formateur', 'association.member'])
             });
         }
 
-        if (config('outils.echelle.enabled')) {
+        if (\App\Support\Outils\EtatsOutils::actif('echelle')) {
             Route::prefix('/echelle')->name('echelle.')->group(function () {
                 Route::get('/', [OutilsEchelleController::class, 'index'])->name('index');
                 Route::post('/', [OutilsEchelleController::class, 'store'])->name('store');
@@ -244,7 +257,7 @@ Route::middleware(['auth', 'role:formateur', 'association.member'])
             });
         }
 
-        if (config('outils.composants.enabled')) {
+        if (\App\Support\Outils\EtatsOutils::actif('composants')) {
             Route::prefix('/trouve-le-composant')->name('composants.')->group(function () {
                 Route::get('/', [OutilsComposantController::class, 'index'])->name('index');
                 Route::post('/', [OutilsComposantController::class, 'store'])->name('store');
@@ -254,7 +267,7 @@ Route::middleware(['auth', 'role:formateur', 'association.member'])
             });
         }
 
-        if (config('outils.buzzer.enabled')) {
+        if (\App\Support\Outils\EtatsOutils::actif('buzzer')) {
             Route::prefix('/buzzer')->name('buzzer.')->group(function () {
                 Route::get('/', [OutilsBuzzerController::class, 'index'])->name('index');
                 Route::post('/', [OutilsBuzzerController::class, 'store'])->name('store');
@@ -273,24 +286,28 @@ Route::middleware(['auth', 'role:formateur', 'association.member'])
         Route::get('/pages-collaboratives', [OutilsPagesCollaborativesController::class, 'index'])
             ->name('pages-collaboratives.index');
 
-        Route::prefix('/roue-aleatoire')->name('roue.')->group(function () {
-            Route::get('/', [RoueAleatoireController::class, 'index'])->name('index');
-            Route::post('/', [RoueAleatoireController::class, 'store'])->name('store');
-            Route::get('/{session}', [RoueAleatoireController::class, 'show'])->name('show');
-            Route::post('/{session}/participants', [RoueAleatoireController::class, 'updateParticipants'])->name('participants');
-            Route::post('/{session}/spin', [RoueAleatoireController::class, 'spin'])->name('spin');
-            Route::post('/{session}/reset', [RoueAleatoireController::class, 'reset'])->name('reset');
-            Route::get('/{session}/state', [RoueAleatoireController::class, 'state'])->name('state');
-        });
+        if (\App\Support\Outils\EtatsOutils::actif('roue_aleatoire')) {
+            Route::prefix('/roue-aleatoire')->name('roue.')->group(function () {
+                Route::get('/', [RoueAleatoireController::class, 'index'])->name('index');
+                Route::post('/', [RoueAleatoireController::class, 'store'])->name('store');
+                Route::get('/{session}', [RoueAleatoireController::class, 'show'])->name('show');
+                Route::post('/{session}/participants', [RoueAleatoireController::class, 'updateParticipants'])->name('participants');
+                Route::post('/{session}/spin', [RoueAleatoireController::class, 'spin'])->name('spin');
+                Route::post('/{session}/reset', [RoueAleatoireController::class, 'reset'])->name('reset');
+                Route::get('/{session}/state', [RoueAleatoireController::class, 'state'])->name('state');
+            });
+        }
 
-        Route::prefix('/mur-questions')->name('questions.')->group(function () {
-            Route::get('/', [QuestionWallController::class, 'index'])->name('index');
-            Route::post('/', [QuestionWallController::class, 'store'])->name('store');
-            Route::get('/{wall}', [QuestionWallController::class, 'show'])->name('show');
-            Route::post('/{wall}/toggle', [QuestionWallController::class, 'toggle'])->name('toggle');
-            Route::post('/{wall}/questions/{question}/status', [QuestionWallController::class, 'updateStatus'])->name('status');
-            Route::get('/{wall}/state', [QuestionWallController::class, 'state'])->name('state');
-        });
+        if (\App\Support\Outils\EtatsOutils::actif('mur_questions')) {
+            Route::prefix('/mur-questions')->name('questions.')->group(function () {
+                Route::get('/', [QuestionWallController::class, 'index'])->name('index');
+                Route::post('/', [QuestionWallController::class, 'store'])->name('store');
+                Route::get('/{wall}', [QuestionWallController::class, 'show'])->name('show');
+                Route::post('/{wall}/toggle', [QuestionWallController::class, 'toggle'])->name('toggle');
+                Route::post('/{wall}/questions/{question}/status', [QuestionWallController::class, 'updateStatus'])->name('status');
+                Route::get('/{wall}/state', [QuestionWallController::class, 'state'])->name('state');
+            });
+        }
 
         // 📚 Mes parcours créés
         Route::prefix('/mes-parcours')->name('mes-parcours.')->group(function () {
@@ -387,17 +404,19 @@ Route::middleware(['auth', 'role:formateur', 'association.member'])
         Route::redirect('/word-clouds', '/formateur/outils-numeriques/nuages-de-mots', 301);
         Route::redirect('/nuages-de-mots', '/formateur/outils-numeriques/nuages-de-mots', 301);
 
-        Route::prefix('/outils-numeriques/nuages-de-mots')
-            ->name('nuages.')
-            ->group(function () {
-                Route::get('/', [FormateurWordCloudController::class, 'index'])->name('index');
-                Route::post('/', [FormateurWordCloudController::class, 'store'])->name('store');
-                Route::get('/{wordCloud}/live', [FormateurWordCloudController::class, 'live'])->name('live');
-                Route::post('/{wordCloud}/question', [FormateurWordCloudController::class, 'setQuestion'])->name('question');
-                Route::post('/{wordCloud}/close', [FormateurWordCloudController::class, 'close'])->name('close');
-                Route::get('/{wordCloud}/live/data', [FormateurWordCloudController::class, 'liveData'])->name('live.data');
-                Route::delete('/{wordCloud}', [FormateurWordCloudController::class, 'destroy'])->name('destroy');
-            });
+        if (\App\Support\Outils\EtatsOutils::actif('nuage_mots')) {
+            Route::prefix('/outils-numeriques/nuages-de-mots')
+                ->name('nuages.')
+                ->group(function () {
+                    Route::get('/', [FormateurWordCloudController::class, 'index'])->name('index');
+                    Route::post('/', [FormateurWordCloudController::class, 'store'])->name('store');
+                    Route::get('/{wordCloud}/live', [FormateurWordCloudController::class, 'live'])->name('live');
+                    Route::post('/{wordCloud}/question', [FormateurWordCloudController::class, 'setQuestion'])->name('question');
+                    Route::post('/{wordCloud}/close', [FormateurWordCloudController::class, 'close'])->name('close');
+                    Route::get('/{wordCloud}/live/data', [FormateurWordCloudController::class, 'liveData'])->name('live.data');
+                    Route::delete('/{wordCloud}', [FormateurWordCloudController::class, 'destroy'])->name('destroy');
+                });
+        }
 
         // Personnaliser les leçons d'un module pour un groupe
         Route::get('/groupes/{group}/modules/{module}/lecons', [GroupeModuleLessonController::class, 'editModuleLessons'])

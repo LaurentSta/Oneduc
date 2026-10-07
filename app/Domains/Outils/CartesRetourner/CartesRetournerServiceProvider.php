@@ -17,7 +17,7 @@ class CartesRetournerServiceProvider extends ServiceProvider
 
     public function boot(DepotCartesRetourner $depot): void
     {
-        if (! config('outils.cartes_retourner.enabled')) {
+        if (! \App\Support\Outils\EtatsOutils::actif('cartes_retourner')) {
             return;
         }
 

@@ -5,7 +5,9 @@ use App\Jobs\ConvertLectureSlides;
 use App\Models\Module;
 use App\Models\ModuleLecture;
 use App\Models\ModuleSection;
+use App\Models\OutilEtat;
 use App\Models\User;
+use App\Support\Outils\EtatsOutils;
 use Illuminate\Foundation\Http\Middleware\ValidateCsrfToken;
 use Illuminate\Http\UploadedFile;
 use Illuminate\Support\Facades\DB;
@@ -22,6 +24,11 @@ beforeEach(function () {
     Queue::fake();
     Storage::fake('local');
     Storage::fake('public');
+
+    // Désactivé par défaut (bug d'affichage historique) : activé ici pour
+    // tester le fonctionnement réel de l'outil, indépendamment de son statut.
+    OutilEtat::create(['cle' => 'powerpoint_module', 'actif' => true]);
+    EtatsOutils::viderCache();
 });
 
 function createPowerPointToolTrainer(string $suffix = ''): User

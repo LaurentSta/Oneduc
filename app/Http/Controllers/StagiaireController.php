@@ -773,7 +773,7 @@ class StagiaireController extends Controller
         }
 
         // Minuteur (1 par groupe, pas de participation individuelle)
-        if (config('outils.minuteur.enabled')) {
+        if (\App\Support\Outils\EtatsOutils::actif('minuteur')) {
             $timer = GroupTimer::where('group_id', $groupId)->first();
             if ($timer) {
                 $tools->push((object) [
@@ -801,7 +801,7 @@ class StagiaireController extends Controller
         }
 
         // Vrai ou Faux
-        if (config('outils.vraifaux.enabled')) {
+        if (\App\Support\Outils\EtatsOutils::actif('vraifaux')) {
             $trueFalseSessions = TrueFalseSession::where('group_id', $groupId)->get();
             if ($trueFalseSessions->count() > 0) {
                 $trueFalseIds = $trueFalseSessions->pluck('id');
@@ -823,7 +823,7 @@ class StagiaireController extends Controller
         }
 
         // Buzzer Quiz
-        if (config('outils.buzzer.enabled')) {
+        if (\App\Support\Outils\EtatsOutils::actif('buzzer')) {
             $buzzerSessions = BuzzerSession::where('group_id', $groupId)->get();
             if ($buzzerSessions->count() > 0) {
                 $buzzerIds = $buzzerSessions->pluck('id');
@@ -845,7 +845,7 @@ class StagiaireController extends Controller
         }
 
         // Zone de clic
-        if (config('outils.composants.enabled')) {
+        if (\App\Support\Outils\EtatsOutils::actif('composants')) {
             $componentFinderSessions = ComponentFinderSession::where('group_id', $groupId)->get();
             if ($componentFinderSessions->count() > 0) {
                 $componentFinderIds = $componentFinderSessions->pluck('id');
@@ -867,7 +867,7 @@ class StagiaireController extends Controller
         }
 
         // Échelle de positionnement
-        if (config('outils.echelle.enabled')) {
+        if (\App\Support\Outils\EtatsOutils::actif('echelle')) {
             $scales = ScaleSession::where('group_id', $groupId)->get();
             if ($scales->count() > 0) {
                 $scaleIds = $scales->pluck('id');

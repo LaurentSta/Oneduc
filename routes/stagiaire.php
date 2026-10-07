@@ -58,31 +58,37 @@ Route::middleware(['auth', 'role:stagiaire', 'track.time'])
             Route::get('/documentation', fn () => view('stagiaire.documentation'))
                 ->name('documentation');
 
-            Route::prefix('/tableau-blanc')
-                ->name('whiteboard.')
-                ->group(function () {
-                    Route::get('/', [WhiteboardController::class, 'index'])->name('index');
-                    Route::get('/notification-status', [WhiteboardController::class, 'notificationStatus'])->name('notification-status');
-                    Route::get('/groupes/{group}', [WhiteboardController::class, 'show'])->name('show');
-                    Route::get('/groupes/{group}/snapshot', [WhiteboardController::class, 'snapshot'])->name('snapshot');
-                    Route::post('/groupes/{group}/excalidraw-save', [WhiteboardController::class, 'save'])->name('excalidraw.save');
-                    Route::post('/groupes/{group}/items', [WhiteboardController::class, 'upsert'])->name('items.upsert');
-                    Route::delete('/groupes/{group}/items/{item}', [WhiteboardController::class, 'destroy'])->name('items.destroy');
-                });
+            if (\App\Support\Outils\EtatsOutils::actif('tableau_blanc')) {
+                Route::prefix('/tableau-blanc')
+                    ->name('whiteboard.')
+                    ->group(function () {
+                        Route::get('/', [WhiteboardController::class, 'index'])->name('index');
+                        Route::get('/notification-status', [WhiteboardController::class, 'notificationStatus'])->name('notification-status');
+                        Route::get('/groupes/{group}', [WhiteboardController::class, 'show'])->name('show');
+                        Route::get('/groupes/{group}/snapshot', [WhiteboardController::class, 'snapshot'])->name('snapshot');
+                        Route::post('/groupes/{group}/excalidraw-save', [WhiteboardController::class, 'save'])->name('excalidraw.save');
+                        Route::post('/groupes/{group}/items', [WhiteboardController::class, 'upsert'])->name('items.upsert');
+                        Route::delete('/groupes/{group}/items/{item}', [WhiteboardController::class, 'destroy'])->name('items.destroy');
+                    });
+            }
 
-            Route::prefix('/emargement')
-                ->name('emargement.')
-                ->group(function () {
-                    Route::get('/notification-status', [EmargementController::class, 'notificationStatus'])->name('notification-status');
-                    Route::get('/groupes/{group}', [EmargementController::class, 'show'])->name('show');
-                    Route::post('/groupes/{group}/signer', [EmargementController::class, 'signer'])->name('signer');
-                });
+            if (\App\Support\Outils\EtatsOutils::actif('emargement')) {
+                Route::prefix('/emargement')
+                    ->name('emargement.')
+                    ->group(function () {
+                        Route::get('/notification-status', [EmargementController::class, 'notificationStatus'])->name('notification-status');
+                        Route::get('/groupes/{group}', [EmargementController::class, 'show'])->name('show');
+                        Route::post('/groupes/{group}/signer', [EmargementController::class, 'signer'])->name('signer');
+                    });
+            }
 
-            Route::prefix('/mur-questions')
-                ->name('question-wall.')
-                ->group(function () {
-                    Route::get('/notification-status', [QuestionWallController::class, 'notificationStatus'])->name('notification-status');
-                });
+            if (\App\Support\Outils\EtatsOutils::actif('mur_questions')) {
+                Route::prefix('/mur-questions')
+                    ->name('question-wall.')
+                    ->group(function () {
+                        Route::get('/notification-status', [QuestionWallController::class, 'notificationStatus'])->name('notification-status');
+                    });
+            }
 
             Route::post('/profil/store', [UserController::class, 'UserProfilStore'])
                 ->name('profil.store');
@@ -171,25 +177,29 @@ Route::middleware(['auth', 'role:stagiaire', 'track.time'])
                     Route::get('/sessions/{session}/snapshot', [LiveQuizSessionController::class, 'snapshot'])->name('snapshot');
                 });
 
-            Route::prefix('/quiz-en-direct')
-                ->name('group-quiz.')
-                ->group(function () {
-                    Route::get('/notification-status', [GroupQuizSessionController::class, 'notificationStatus'])->name('notification-status');
-                    Route::get('/join/{code}', [GroupQuizSessionController::class, 'joinByCode'])->name('join-code');
-                    Route::get('/{session}', [GroupQuizSessionController::class, 'show'])->name('show');
-                    Route::post('/{session}/answer', [GroupQuizSessionController::class, 'answer'])->name('answer');
-                    Route::get('/{session}/snapshot', [GroupQuizSessionController::class, 'snapshot'])->name('snapshot');
-                });
+            if (\App\Support\Outils\EtatsOutils::actif('quiz_direct')) {
+                Route::prefix('/quiz-en-direct')
+                    ->name('group-quiz.')
+                    ->group(function () {
+                        Route::get('/notification-status', [GroupQuizSessionController::class, 'notificationStatus'])->name('notification-status');
+                        Route::get('/join/{code}', [GroupQuizSessionController::class, 'joinByCode'])->name('join-code');
+                        Route::get('/{session}', [GroupQuizSessionController::class, 'show'])->name('show');
+                        Route::post('/{session}/answer', [GroupQuizSessionController::class, 'answer'])->name('answer');
+                        Route::get('/{session}/snapshot', [GroupQuizSessionController::class, 'snapshot'])->name('snapshot');
+                    });
+            }
 
             // Nuage de mots (parcours)
-            Route::prefix('/wordcloud')
-                ->name('wordcloud.')
-                ->group(function () {
-                    Route::get('/notification-status', [WordCloudController::class, 'notificationStatus'])->name('notification-status');
-                    Route::get('/{item}', [ParcoursWordCloudController::class, 'show'])->name('parcours.show');
-                    Route::post('/{item}/submit', [ParcoursWordCloudController::class, 'submit'])->name('parcours.submit');
-                    Route::get('/{item}/data', [ParcoursWordCloudController::class, 'liveData'])->name('parcours.data');
-                });
+            if (\App\Support\Outils\EtatsOutils::actif('nuage_mots')) {
+                Route::prefix('/wordcloud')
+                    ->name('wordcloud.')
+                    ->group(function () {
+                        Route::get('/notification-status', [WordCloudController::class, 'notificationStatus'])->name('notification-status');
+                        Route::get('/{item}', [ParcoursWordCloudController::class, 'show'])->name('parcours.show');
+                        Route::post('/{item}/submit', [ParcoursWordCloudController::class, 'submit'])->name('parcours.submit');
+                        Route::get('/{item}/data', [ParcoursWordCloudController::class, 'liveData'])->name('parcours.data');
+                    });
+            }
 
             // Outils génériques de parcours (buzzer, échelle, vrai/faux, roue, composants)
             Route::prefix('/outil')

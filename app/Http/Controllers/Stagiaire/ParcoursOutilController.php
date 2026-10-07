@@ -32,6 +32,8 @@ class ParcoursOutilController extends Controller
 
     private function showVraiFaux(Group $group, FormateurParcoursItem $item): View|RedirectResponse
     {
+        abort_unless(\App\Support\Outils\EtatsOutils::actif('vraifaux'), 404);
+
         $session = TrueFalseSession::query()
             ->where('group_id', $group->id)
             ->where('formateur_parcours_item_id', $item->id)

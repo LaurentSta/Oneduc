@@ -9,7 +9,7 @@ class MinuteurServiceProvider extends ServiceProvider
 {
     public function boot(): void
     {
-        if (! config('outils.minuteur.enabled')) {
+        if (! \App\Support\Outils\EtatsOutils::actif('minuteur')) {
             return;
         }
 
