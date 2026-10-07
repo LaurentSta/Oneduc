@@ -139,6 +139,12 @@
                     'icon' => 'ti-abc',
                     'active' => request()->routeIs('admin.nuage.*'),
                 ],
+                [
+                    'label' => 'État des outils',
+                    'href' => route('admin.outils.index'),
+                    'icon' => 'ti-toggle-right',
+                    'active' => request()->routeIs('admin.outils.*'),
+                ],
             ],
         ],
     ];

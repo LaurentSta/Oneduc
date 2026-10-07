@@ -23,6 +23,7 @@ use App\Http\Controllers\Backend\PilotageController;
 use App\Http\Controllers\Backend\TrainerPathQualityController;
 use App\Http\Controllers\Backend\ConsommationIAController;
 use App\Http\Controllers\Backend\WordCloudController;
+use App\Http\Controllers\Backend\OutilEtatController;
 use App\Http\Controllers\UtilisateurController;
 
 Route::middleware(['auth', 'role:admin', 'admin.activity'])
@@ -39,6 +40,12 @@ Route::middleware(['auth', 'role:admin', 'admin.activity'])
         // Sécurité
         Route::get('/securite', [AdminController::class, 'AdminSecurite'])->name('securite');
         Route::post('/securite', [AdminController::class, 'AdminSecuriteUpdate'])->name('securite.update');
+
+        // Marche/arrêt des outils numériques
+        Route::prefix('outils')->name('outils.')->group(function () {
+            Route::get('/', [OutilEtatController::class, 'index'])->name('index');
+            Route::post('/{cle}/toggle', [OutilEtatController::class, 'toggle'])->name('toggle');
+        });
 
 
         Route::get('/formateurs', [AdminController::class, 'AllFormateur'])->name('formateurs');
