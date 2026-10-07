@@ -15,7 +15,7 @@
         "concurrently": "^9.0.1",
         "laravel-vite-plugin": "^1.2.0",
         "postcss": "^8.4.31",
-        "sass-embedded": "^1.91.0",
+        "sass-embedded": "^1.105.1",
         "tailwindcss": "^4.1.18",
         "vite": "^6.0.11"
     },
