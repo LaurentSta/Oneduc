@@ -17,7 +17,7 @@ class MemoireServiceProvider extends ServiceProvider
 
     public function boot(DepotMemoire $depot): void
     {
-        if (! config('outils.memoire.enabled')) {
+        if (! \App\Support\Outils\EtatsOutils::actif('memoire')) {
             return;
         }
 

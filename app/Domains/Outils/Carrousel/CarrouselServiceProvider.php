@@ -17,7 +17,7 @@ class CarrouselServiceProvider extends ServiceProvider
 
     public function boot(DepotCarrousel $depot): void
     {
-        if (! config('outils.carrousel.enabled')) {
+        if (! \App\Support\Outils\EtatsOutils::actif('carrousel')) {
             return;
         }
 

@@ -17,7 +17,7 @@ class TriCartesServiceProvider extends ServiceProvider
 
     public function boot(DepotTriCartes $depot): void
     {
-        if (! config('outils.tri_cartes.enabled')) {
+        if (! \App\Support\Outils\EtatsOutils::actif('tri_cartes')) {
             return;
         }
 

@@ -17,7 +17,7 @@ class PenduServiceProvider extends ServiceProvider
 
     public function boot(DepotPendu $depot): void
     {
-        if (! config('outils.pendu.enabled')) {
+        if (! \App\Support\Outils\EtatsOutils::actif('pendu')) {
             return;
         }
 

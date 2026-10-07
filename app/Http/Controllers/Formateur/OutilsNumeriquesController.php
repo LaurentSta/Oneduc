@@ -50,7 +50,7 @@ class OutilsNumeriquesController extends Controller
             ->limit(5)
             ->get();
 
-        $recentScales = config('outils.echelle.enabled')
+        $recentScales = \App\Support\Outils\EtatsOutils::actif('echelle')
             ? ScaleSession::query()
                 ->whereHas('group', fn ($q) => $q->accessibleByTrainer($formateurId))
                 ->with('group:id,name')
@@ -60,7 +60,7 @@ class OutilsNumeriquesController extends Controller
                 ->get()
             : collect();
 
-        $recentTrueFalseSessions = config('outils.vraifaux.enabled')
+        $recentTrueFalseSessions = \App\Support\Outils\EtatsOutils::actif('vraifaux')
             ? TrueFalseSession::query()
                 ->whereHas('group', fn ($q) => $q->accessibleByTrainer($formateurId))
                 ->with('group:id,name')
@@ -70,7 +70,7 @@ class OutilsNumeriquesController extends Controller
                 ->get()
             : collect();
 
-        $recentBuzzerSessions = config('outils.buzzer.enabled')
+        $recentBuzzerSessions = \App\Support\Outils\EtatsOutils::actif('buzzer')
             ? BuzzerSession::query()
                 ->whereHas('group', fn ($q) => $q->accessibleByTrainer($formateurId))
                 ->with('group:id,name')
@@ -80,7 +80,7 @@ class OutilsNumeriquesController extends Controller
                 ->get()
             : collect();
 
-        $recentComponentFinderSessions = config('outils.composants.enabled')
+        $recentComponentFinderSessions = \App\Support\Outils\EtatsOutils::actif('composants')
             ? ComponentFinderSession::query()
                 ->whereHas('group', fn ($q) => $q->accessibleByTrainer($formateurId))
                 ->with('group:id,name')
