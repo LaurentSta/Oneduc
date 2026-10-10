@@ -181,6 +181,13 @@ class NettoyeurBlocsModule
                         'scorm_package_version_id' => $versionId,
                     ];
                     break;
+
+                case 'outil':
+                    $outil = OutilsLecon::nettoyer($block, $moduleId);
+                    if ($outil !== null) {
+                        $sanitized[] = $outil;
+                    }
+                    break;
             }
         }
 

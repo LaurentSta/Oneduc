@@ -2,10 +2,12 @@
 
 namespace App\Domains\ModulesFormateur\Support;
 
+use App\Models\Competency;
+use App\Models\ComponentFinderActivity;
 use App\Models\ModuleLecture;
 use App\Models\ModuleSection;
-use App\Models\Competency;
 use App\Models\ScormPackageVersion;
+use Illuminate\Support\Facades\Route;
 use Illuminate\Support\Facades\Storage;
 
 class DonneesModule
@@ -21,6 +23,8 @@ class DonneesModule
             'section' => $lecture->section,
             'lecture' => $lecture,
             'initialBlocks' => $this->resolvedContentBlocks($lecture),
+            'outilsLecon' => OutilsLecon::pourEditeur(),
+            'zonesDeClic' => $this->zonesDeClic(),
             'competences' => Competency::query()->orderBy('label')->get(),
             'nombreQuestionsActives' => $lecture->quizQuestions()->where('is_active', true)->count(),
             'ressources' => $module->moduleResources()->get(),
@@ -112,8 +116,61 @@ class DonneesModule
                     $block['preview_url'] = $version?->asset_url;
                 }
 
+                if (($block['type'] ?? null) === 'outil' && OutilsLecon::lie((string) ($block['outil'] ?? ''))) {
+                    // L'éditeur n'a que l'identifiant : on lui joint de quoi présenter l'activité liée.
+                    $activite = OutilsLecon::activite($block);
+                    $block['activite_id'] = $activite?->id;
+                    $block['activite'] = $activite ? $this->zoneDeClic($activite) : null;
+                    unset($block['configuration']);
+                }
+
                 return $block;
             })
             ->all();
+    }
+
+    /**
+     * Zones de clic du concepteur connecté, qu'un bloc outil peut pointer.
+     * La bibliothèque n'existe que côté formateur.
+     *
+     * @return array{liste: array<int, array<string, mixed>>, url_creation: ?string}
+     */
+    private function zonesDeClic(): array
+    {
+        $utilisateur = auth()->user();
+
+        return [
+            'liste' => ComponentFinderActivity::query()
+                ->where('formateur_id', $utilisateur?->id)
+                ->latest()
+                ->get()
+                ->map(fn (ComponentFinderActivity $zone): array => $this->zoneDeClic($zone))
+                ->all(),
+            'url_creation' => $this->bibliothequeAccessible() ? route('formateur.composants.create') : null,
+        ];
+    }
+
+    /**
+     * @return array<string, mixed>
+     */
+    private function zoneDeClic(ComponentFinderActivity $zone): array
+    {
+        $aMoi = (int) $zone->formateur_id === (int) auth()->id();
+
+        return [
+            'id' => $zone->id,
+            'titre' => $zone->title,
+            'image_url' => OutilsLecon::urlImage($zone->image_path),
+            'nombre' => count($zone->zones ?? []),
+            'auteur' => $aMoi ? null : $zone->formateur?->name,
+            'url_modification' => $aMoi && $this->bibliothequeAccessible()
+                ? route('formateur.composants.activities.edit', $zone)
+                : null,
+        ];
+    }
+
+    private function bibliothequeAccessible(): bool
+    {
+        return auth()->user()?->role === 'formateur' && Route::has('formateur.composants.index');
     }
 }

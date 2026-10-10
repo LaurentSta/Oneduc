@@ -179,17 +179,25 @@
       </div>
 
       <template x-if="feedback">
-        <div class="mt-4 flex items-center justify-between gap-3 rounded-xl px-4 py-3"
+        <div class="mt-4 rounded-xl px-4 py-3"
              :class="feedback.correct ? 'bg-green-50 border border-green-200' : 'bg-red-50 border border-red-200'">
-          <p class="text-sm font-semibold" :class="feedback.correct ? 'text-green-700' : 'text-red-700'">
-            <span x-show="feedback.correct">Correct !</span>
-            <span x-show="!feedback.correct">Raté ! La zone correcte est mise en évidence.</span>
-          </p>
-          <button @click="next()" :disabled="submitting"
-                  class="rounded-lg bg-bleuone px-4 py-2 text-xs font-bold text-white hover:bg-bleuone-light transition disabled:opacity-50">
-            <span x-show="currentIndex + 1 < zones.length">Suivant</span>
-            <span x-show="currentIndex + 1 >= zones.length">Terminer</span>
-          </button>
+          <div class="flex items-center justify-between gap-3">
+            <p class="text-sm font-semibold" :class="feedback.correct ? 'text-green-700' : 'text-red-700'">
+              <span x-show="feedback.correct">Correct !</span>
+              <span x-show="!feedback.correct">Raté ! La zone correcte est mise en évidence.</span>
+            </p>
+            <button @click="next()" :disabled="submitting"
+                    class="shrink-0 rounded-lg bg-bleuone px-4 py-2 text-xs font-bold text-white hover:bg-bleuone-light transition disabled:opacity-50">
+              <span x-show="currentIndex + 1 < zones.length">Suivant</span>
+              <span x-show="currentIndex + 1 >= zones.length">Terminer</span>
+            </button>
+          </div>
+          <template x-if="feedback.zone.description">
+            <div class="mt-3 border-t pt-3" :class="feedback.correct ? 'border-green-200' : 'border-red-200'">
+              <p class="text-sm font-bold text-gray-800" x-text="feedback.zone.label"></p>
+              <p class="mt-1 text-sm text-gray-700 whitespace-pre-line" x-text="feedback.zone.description"></p>
+            </div>
+          </template>
         </div>
       </template>
     </div>

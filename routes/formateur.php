@@ -260,7 +260,12 @@ Route::middleware(['auth', 'role:formateur', 'association.member'])
         if (\App\Support\Outils\EtatsOutils::actif('composants')) {
             Route::prefix('/trouve-le-composant')->name('composants.')->group(function () {
                 Route::get('/', [OutilsComposantController::class, 'index'])->name('index');
+                Route::get('/nouvelle', [OutilsComposantController::class, 'create'])->name('create');
                 Route::post('/', [OutilsComposantController::class, 'store'])->name('store');
+                Route::post('/enregistrees/{componentFinderActivity}/lancer', [OutilsComposantController::class, 'launch'])->name('activities.launch');
+                Route::get('/enregistrees/{componentFinderActivity}/modifier', [OutilsComposantController::class, 'edit'])->name('activities.edit');
+                Route::put('/enregistrees/{componentFinderActivity}', [OutilsComposantController::class, 'update'])->name('activities.update');
+                Route::delete('/enregistrees/{componentFinderActivity}', [OutilsComposantController::class, 'destroyActivity'])->name('activities.destroy');
                 Route::get('/{componentFinderSession}', [OutilsComposantController::class, 'show'])->name('show');
                 Route::post('/{componentFinderSession}/toggle', [OutilsComposantController::class, 'toggle'])->name('toggle');
                 Route::delete('/{componentFinderSession}', [OutilsComposantController::class, 'destroy'])->name('destroy');

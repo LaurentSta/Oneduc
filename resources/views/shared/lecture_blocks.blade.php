@@ -20,6 +20,11 @@
         : [['kind' => 'content', 'blocks' => $blocksArr]];
 
     $totalGates = max(0, count($segments) - 1);
+
+    // Les activités « outil » marquées obligatoires retiennent aussi le CTA de fin de leçon.
+    $outilsObligatoires = $interactif
+        ? \App\Domains\ModulesFormateur\Support\OutilsLecon::nombreObligatoires($blocksArr)
+        : 0;
 @endphp
 
 @if($interactif)
@@ -30,9 +35,14 @@
             Alpine.store('lectureProgress', {
                 totalGates: {{ $totalGates }},
                 revealedCount: 0,
+                outilsRestants: {{ $outilsObligatoires }},
                 get isComplete() {
-                    return this.revealedCount >= this.totalGates;
+                    return this.revealedCount >= this.totalGates && this.outilsRestants <= 0;
                 },
+            });
+            window.addEventListener('outil-termine', () => {
+                const progression = Alpine.store('lectureProgress');
+                progression.outilsRestants = Math.max(0, progression.outilsRestants - 1);
             });
         });
     </script>

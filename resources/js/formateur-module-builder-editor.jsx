@@ -84,6 +84,22 @@ function ScormBlockGlyph() {
   );
 }
 
+function OutilBlockGlyph() {
+  return (
+    <svg viewBox="0 0 20 20" fill="none" stroke="currentColor" strokeWidth="1.6" strokeLinecap="round" strokeLinejoin="round" className="h-5 w-5">
+      <rect x="3" y="6.5" width="10" height="10.5" rx="1.5" />
+      <path d="M7 6.5V4.5A1.5 1.5 0 018.5 3h7A1.5 1.5 0 0117 4.5v8a1.5 1.5 0 01-1.5 1.5H13" />
+    </svg>
+  );
+}
+
+// Contenu de départ et plafond d'éléments de chaque outil intégrable (miroir de OutilsLecon côté serveur).
+const OUTIL_CONFIGURATIONS = {
+  'cartes-retourner': () => ({ titre: '', consigne: '', cartes: [{ recto: '', verso: '' }] }),
+  'vrai-faux': () => ({ titre: '', consigne: '', affirmations: [{ texte: '', reponse: true, explication: '' }] }),
+};
+const OUTIL_MAX_ELEMENTS = { 'cartes-retourner': 100, 'vrai-faux': 50 };
+
 const BLOCK_GLYPHS = {
   text: TextBlockGlyph,
   image: ImageBlockGlyph,
@@ -92,6 +108,19 @@ const BLOCK_GLYPHS = {
   quote: QuoteBlockGlyph,
   divider: DividerBlockGlyph,
   scorm: ScormBlockGlyph,
+};
+
+// Repères visuels de chaque type de bloc dans l'éditeur : liseré à gauche et bandeau d'en-tête.
+// La couleur double l'icône et le nom du bloc, elle ne les remplace pas.
+const BLOCK_STYLES = {
+  text: { lisere: 'border-l-bleuone', bandeau: 'bg-sky-50', libelle: 'text-bleuone' },
+  image: { lisere: 'border-l-emerald-500', bandeau: 'bg-emerald-50', libelle: 'text-emerald-800' },
+  video: { lisere: 'border-l-purple-500', bandeau: 'bg-purple-50', libelle: 'text-purple-800' },
+  audio: { lisere: 'border-l-pink-500', bandeau: 'bg-pink-50', libelle: 'text-pink-800' },
+  quote: { lisere: 'border-l-amber-500', bandeau: 'bg-amber-50', libelle: 'text-amber-800' },
+  divider: { lisere: 'border-l-gray-400', bandeau: 'bg-gray-100', libelle: 'text-gray-700' },
+  scorm: { lisere: 'border-l-indigo-500', bandeau: 'bg-indigo-50', libelle: 'text-indigo-800' },
+  outil: { lisere: 'border-l-orangeone', bandeau: 'bg-orange-50', libelle: 'text-orange-800' },
 };
 
 let blockIdSeq = 0;
@@ -113,8 +142,12 @@ function generateContentBlockKey() {
   return key;
 }
 
-function createBlock(type) {
+function createBlock(type, outil) {
   switch (type) {
+    case 'outil':
+      // Outil « lié » : le bloc ne garde que l'identifiant d'une activité de la bibliothèque du formateur.
+      if (!OUTIL_CONFIGURATIONS[outil]) return { clientId: nextClientId(), type, outil, activite_id: null, obligatoire: false };
+      return { clientId: nextClientId(), type, outil, configuration: OUTIL_CONFIGURATIONS[outil](), obligatoire: false };
     case 'text':
       return { clientId: nextClientId(), type, html: '' };
     case 'image':
@@ -750,26 +783,264 @@ function DividerBlockEditor({ block, onChange }) {
   );
 }
 
-function BlockRow({ block, index, total, onMove, onChange, onRemove, onDragStart, onDragOver, onDrop, uploadUrl, videoUploadUrl, audioUploadUrl, audioGenerateUrl, scormUploadUrl }) {
+const OUTIL_FIELD_CLASS = 'w-full rounded-[10px] border border-gray-300 px-3 py-2 text-sm focus:border-orangeone focus:outline-none';
+
+function CartesRetournerEditor({ cartes, onChange }) {
+  const modifier = (index, champ, valeur) => onChange(cartes.map((carte, i) => (i === index ? { ...carte, [champ]: valeur } : carte)));
+
+  return (
+    <div className="space-y-2">
+      {cartes.map((carte, index) => (
+        <div key={index} className="rounded-[10px] border border-gray-200 bg-white p-3">
+          <div className="mb-2 flex items-center justify-between">
+            <span className="text-xs font-semibold text-gray-500">Carte {index + 1}</span>
+            <button type="button" onClick={() => onChange(cartes.filter((_, i) => i !== index))} className="text-xs font-semibold text-red-700 hover:underline">Retirer</button>
+          </div>
+          <div className="grid gap-2 sm:grid-cols-2">
+            <textarea
+              rows={2}
+              maxLength={2000}
+              placeholder="Recto : la question, le mot, la situation"
+              aria-label={`Recto de la carte ${index + 1}`}
+              value={carte.recto || ''}
+              onChange={(e) => modifier(index, 'recto', e.target.value)}
+              className={OUTIL_FIELD_CLASS}
+            />
+            <textarea
+              rows={2}
+              maxLength={2000}
+              placeholder="Verso : la réponse, la définition"
+              aria-label={`Verso de la carte ${index + 1}`}
+              value={carte.verso || ''}
+              onChange={(e) => modifier(index, 'verso', e.target.value)}
+              className={OUTIL_FIELD_CLASS}
+            />
+          </div>
+        </div>
+      ))}
+      <button
+        type="button"
+        disabled={cartes.length >= OUTIL_MAX_ELEMENTS['cartes-retourner']}
+        onClick={() => onChange([...cartes, { recto: '', verso: '' }])}
+        className="btn-oneduc-outline !px-3 !py-2 !text-sm disabled:opacity-40"
+      >
+        + Ajouter une carte
+      </button>
+    </div>
+  );
+}
+
+function VraiFauxEditor({ affirmations, onChange }) {
+  const modifier = (index, champ, valeur) => onChange(affirmations.map((affirmation, i) => (i === index ? { ...affirmation, [champ]: valeur } : affirmation)));
+
+  return (
+    <div className="space-y-2">
+      {affirmations.map((affirmation, index) => (
+        <div key={index} className="space-y-2 rounded-[10px] border border-gray-200 bg-white p-3">
+          <div className="flex items-center justify-between">
+            <span className="text-xs font-semibold text-gray-500">Affirmation {index + 1}</span>
+            <button type="button" onClick={() => onChange(affirmations.filter((_, i) => i !== index))} className="text-xs font-semibold text-red-700 hover:underline">Retirer</button>
+          </div>
+          <textarea
+            rows={2}
+            maxLength={1000}
+            placeholder="Ex. Un mot de passe solide contient au moins 12 caractères."
+            aria-label={`Texte de l’affirmation ${index + 1}`}
+            value={affirmation.texte || ''}
+            onChange={(e) => modifier(index, 'texte', e.target.value)}
+            className={OUTIL_FIELD_CLASS}
+          />
+          <div className="flex flex-wrap items-center gap-2 text-sm">
+            <span className="text-gray-600">Bonne réponse :</span>
+            {[[true, 'Vrai'], [false, 'Faux']].map(([valeur, libelle]) => (
+              <button
+                key={libelle}
+                type="button"
+                aria-pressed={!!affirmation.reponse === valeur}
+                onClick={() => modifier(index, 'reponse', valeur)}
+                className={`rounded-[8px] border px-3 py-1 font-semibold ${!!affirmation.reponse === valeur ? 'border-bleuone bg-bleuone text-white' : 'border-gray-300 text-gray-600 hover:border-bleuone'}`}
+              >
+                {libelle}
+              </button>
+            ))}
+          </div>
+          <input
+            type="text"
+            maxLength={1000}
+            placeholder="Explication affichée après la réponse (optionnel)"
+            aria-label={`Explication de l’affirmation ${index + 1}`}
+            value={affirmation.explication || ''}
+            onChange={(e) => modifier(index, 'explication', e.target.value)}
+            className={OUTIL_FIELD_CLASS}
+          />
+        </div>
+      ))}
+      <button
+        type="button"
+        disabled={affirmations.length >= OUTIL_MAX_ELEMENTS['vrai-faux']}
+        onClick={() => onChange([...affirmations, { texte: '', reponse: true, explication: '' }])}
+        className="btn-oneduc-outline !px-3 !py-2 !text-sm disabled:opacity-40"
+      >
+        + Ajouter une affirmation
+      </button>
+    </div>
+  );
+}
+
+function ZoneClicEditor({ block, zonesClic, onChoisir }) {
+  const [choix, setChoix] = useState(false);
+  const enregistrees = zonesClic.liste || [];
+  // Ma bibliothèque d'abord ; sinon ce que le serveur a résolu (zone de clic d'un collègue).
+  const activite = enregistrees.find((zoneClic) => zoneClic.id === block.activite_id)
+    || (block.activite && block.activite.id === block.activite_id ? block.activite : null);
+
+  if (activite && !choix) {
+    return (
+      <div className="flex flex-wrap items-center gap-3 rounded-[10px] border border-gray-200 bg-white p-3">
+        <img src={activite.image_url} alt="" className="h-16 w-24 shrink-0 rounded-[8px] border border-gray-200 object-cover" />
+        <div className="min-w-0 flex-1">
+          <p className="truncate text-sm font-semibold text-bleuone">{activite.titre}</p>
+          <p className="text-xs text-gray-600">
+            {activite.nombre} élément{activite.nombre > 1 ? 's' : ''} à trouver{activite.auteur ? ` · créée par ${activite.auteur}` : ''}
+          </p>
+          <p className="mt-1 text-xs text-gray-500">Ce qui est modifié dans l’outil Zone de clic l’est aussi dans cette leçon.</p>
+        </div>
+        <div className="flex shrink-0 flex-col items-end gap-1">
+          {activite.url_modification && (
+            <a href={activite.url_modification} target="_blank" rel="noopener" className="text-sm font-semibold text-bleuone underline">Modifier dans l’outil</a>
+          )}
+          <button type="button" onClick={() => setChoix(true)} className="text-sm font-semibold text-gray-600 underline">Changer</button>
+        </div>
+      </div>
+    );
+  }
+
+  return (
+    <div className="space-y-2 rounded-[10px] border border-gray-200 bg-white p-3">
+      {!activite && (
+        <p role="status" className="rounded-[10px] border border-amber-200 bg-amber-50 px-3 py-2 text-xs text-amber-800">
+          {block.activite_id
+            ? 'La zone de clic de ce bloc n’existe plus : choisissez-en une autre, sinon les stagiaires ne voient pas cette activité.'
+            : 'Aucune zone de clic n’est encore choisie : tant que ce n’est pas fait, les stagiaires ne voient pas cette activité.'}
+        </p>
+      )}
+      {enregistrees.length === 0
+        ? <p className="text-sm text-gray-600">Vous n’avez pas encore de zone de clic. Elles se créent dans Outils numériques.</p>
+        : <p className="text-xs font-semibold text-gray-500">Quelle zone de clic le stagiaire doit-il explorer ?</p>}
+      <div className="grid gap-2 sm:grid-cols-2">
+        {enregistrees.map((zoneClic) => (
+          <button
+            key={zoneClic.id}
+            type="button"
+            onClick={() => {
+              onChoisir(zoneClic);
+              setChoix(false);
+            }}
+            className="flex items-center gap-3 rounded-[8px] border border-gray-300 p-2 text-left hover:border-orangeone"
+          >
+            <img src={zoneClic.image_url} alt="" className="h-12 w-16 shrink-0 rounded-[6px] object-cover" />
+            <span className="min-w-0 flex-1">
+              <span className="block truncate text-sm font-semibold text-bleuone">{zoneClic.titre}</span>
+              <span className="block text-xs text-gray-600">{zoneClic.nombre} élément{zoneClic.nombre > 1 ? 's' : ''} à trouver</span>
+            </span>
+            <span className="shrink-0 rounded-[8px] bg-orangeone px-3 py-1.5 text-xs font-bold text-white">Choisir</span>
+          </button>
+        ))}
+      </div>
+      <div className="flex flex-wrap gap-4">
+        {zonesClic.url_creation && (
+          <a href={zonesClic.url_creation} target="_blank" rel="noopener" className="text-sm font-semibold text-bleuone underline">
+            Créer une zone de clic (nouvel onglet, puis rechargez cette page)
+          </a>
+        )}
+        {activite && <button type="button" onClick={() => setChoix(false)} className="text-sm font-semibold text-gray-600 underline">Annuler</button>}
+      </div>
+    </div>
+  );
+}
+
+function OutilBlockEditor({ block, onChange, outil, zonesClic }) {
+  const lie = !OUTIL_CONFIGURATIONS[block.outil];
+  const configuration = block.configuration || {};
+  const configurer = (champ, valeur) => onChange({ ...block, configuration: { ...configuration, [champ]: valeur } });
+
+  return (
+    <div className="space-y-3">
+      {outil && !outil.actif && (
+        <p role="status" className="rounded-[10px] border border-amber-200 bg-amber-50 px-3 py-2 text-xs text-amber-800">
+          Cet outil est désactivé par l’administration : les stagiaires ne voient pas cette activité tant qu’il n’est pas réactivé.
+        </p>
+      )}
+      {!lie && <input
+        type="text"
+        maxLength={255}
+        placeholder="Titre de l’activité (optionnel)"
+        aria-label="Titre de l’activité"
+        value={configuration.titre || ''}
+        onChange={(e) => configurer('titre', e.target.value)}
+        className={OUTIL_FIELD_CLASS}
+      />}
+      {!lie && <input
+        type="text"
+        maxLength={2000}
+        placeholder="Consigne pour le stagiaire (optionnel)"
+        aria-label="Consigne pour le stagiaire"
+        value={configuration.consigne || ''}
+        onChange={(e) => configurer('consigne', e.target.value)}
+        className={OUTIL_FIELD_CLASS}
+      />}
+      {block.outil === 'cartes-retourner' && <CartesRetournerEditor cartes={configuration.cartes || []} onChange={(cartes) => configurer('cartes', cartes)} />}
+      {block.outil === 'vrai-faux' && <VraiFauxEditor affirmations={configuration.affirmations || []} onChange={(affirmations) => configurer('affirmations', affirmations)} />}
+      {block.outil === 'composants' && (
+        <ZoneClicEditor
+          block={block}
+          zonesClic={zonesClic}
+          onChoisir={(zoneClic) => onChange({ ...block, activite_id: zoneClic.id, activite: null })}
+        />
+      )}
+      <label className="flex items-start gap-2 text-sm text-gray-700">
+        <input
+          type="checkbox"
+          checked={!!block.obligatoire}
+          onChange={(e) => onChange({ ...block, obligatoire: e.target.checked })}
+          className="mt-0.5 rounded border-gray-300 text-orangeone"
+        />
+        <span>À terminer avant de continuer la leçon</span>
+      </label>
+    </div>
+  );
+}
+
+function BlockRow({ block, index, total, onMove, onChange, onRemove, onDragStart, indicateur, uploadUrl, videoUploadUrl, audioUploadUrl, audioGenerateUrl, scormUploadUrl, outils, zonesClic }) {
+  const outil = block.type === 'outil' ? outils.find((candidat) => candidat.cle === block.outil) : null;
+  const libelle = block.type === 'outil' ? `Outil · ${outil?.libelle || block.outil}` : (BLOCK_LABELS[block.type] || block.type);
+  const style = BLOCK_STYLES[block.type] || BLOCK_STYLES.divider;
+  const Glyph = block.type === 'outil' ? OutilBlockGlyph : BLOCK_GLYPHS[block.type];
+
   return (
     <div
       draggable
-      onDragStart={() => onDragStart(index)}
-      onDragOver={(e) => { e.preventDefault(); onDragOver(index); }}
-      onDrop={() => onDrop(index)}
-      className="rounded-[14px] border border-gray-200 bg-gray-50/60 p-3"
+      data-block-row
+      onDragStart={(event) => onDragStart(event, index)}
+      className={`relative rounded-[14px] border border-l-4 border-gray-200 bg-gray-50/60 shadow-sm focus-within:ring-2 focus-within:ring-orange-200 ${style.lisere}`}
     >
-      <div className="mb-2 flex items-center justify-between">
-        <span className="cursor-move text-xs font-bold uppercase tracking-wide text-gray-400">
-          ⠿ {BLOCK_LABELS[block.type] || block.type}
+      {/* Ligne de dépôt, centrée dans l'espace qui sépare deux blocs. */}
+      {indicateur && <div aria-hidden="true" className={`pointer-events-none absolute inset-x-0 h-1 rounded-full bg-orangeone ${indicateur === 'avant' ? '-top-2.5' : '-bottom-2.5'}`} />}
+      <div className={`flex items-center justify-between gap-3 rounded-tl-[10px] rounded-tr-[13px] border-b border-gray-200 px-3 py-2 ${style.bandeau}`}>
+        <span className={`flex min-w-0 cursor-move items-center gap-2 text-xs font-bold uppercase tracking-wide ${style.libelle}`}>
+          <span aria-hidden="true" className="text-gray-400">⠿</span>
+          <span className="flex h-5 w-5 shrink-0 items-center justify-center rounded-full bg-white text-[11px] text-gray-700"><span className="sr-only">Bloc </span>{index + 1}</span>
+          {Glyph && <Glyph />}
+          <span className="truncate">{libelle}</span>
         </span>
-        <div className="flex flex-wrap gap-3">
+        <div className="flex shrink-0 flex-wrap gap-3">
           <button type="button" onClick={() => onMove(index, -1)} disabled={index === 0} aria-label="Monter ce bloc" className="text-sm font-semibold text-bleuone disabled:opacity-30">↑</button>
           <button type="button" onClick={() => onMove(index, 1)} disabled={index === total - 1} aria-label="Descendre ce bloc" className="text-sm font-semibold text-bleuone disabled:opacity-30">↓</button>
           <button type="button" onClick={() => onRemove(index)} className="text-xs font-semibold text-red-700 hover:underline">Supprimer</button>
         </div>
       </div>
 
+      <div className="p-3">
       {block.type === 'text' && <TextBlockEditor block={block} onChange={onChange} />}
       {block.type === 'image' && <ImageBlockEditor block={block} onChange={onChange} uploadUrl={uploadUrl} />}
       {block.type === 'video' && <VideoBlockEditor block={block} onChange={onChange} uploadUrl={videoUploadUrl} />}
@@ -777,6 +1048,8 @@ function BlockRow({ block, index, total, onMove, onChange, onRemove, onDragStart
       {block.type === 'quote' && <QuoteBlockEditor block={block} onChange={onChange} />}
       {block.type === 'scorm' && <ScormBlockEditor block={block} onChange={onChange} uploadUrl={scormUploadUrl} />}
       {block.type === 'divider' && <DividerBlockEditor block={block} onChange={onChange} />}
+      {block.type === 'outil' && <OutilBlockEditor block={block} onChange={onChange} outil={outil} zonesClic={zonesClic} />}
+      </div>
     </div>
   );
 }
@@ -799,18 +1072,38 @@ function SaveStatus({ status, savedAt, onSave }) {
   return null;
 }
 
-function InsertBlockMenu({ index, onAdd, disabled }) {
+function InsertBlockMenu({ index, onAdd, disabled, outils }) {
+  const [choixOutil, setChoixOutil] = useState(false);
+
   return (
     <details className="relative my-3">
-      <summary className="cursor-pointer rounded-[10px] border border-dashed border-gray-300 px-3 py-2 text-center text-sm font-semibold text-bleuone">+ Ajouter un bloc ici</summary>
-      <div className="mt-2 flex flex-wrap gap-2 rounded-[12px] border border-gray-200 bg-white p-3">
-        {Object.entries(BLOCK_LABELS).map(([type, label]) => {
-          const Glyph = BLOCK_GLYPHS[type];
-          return <button key={type} type="button" disabled={disabled} onClick={(event) => {
-            onAdd(type, index);
-            event.currentTarget.closest('details').open = false;
-          }} className="flex items-center gap-2 rounded-[8px] border border-gray-300 px-3 py-2 text-sm font-semibold text-gray-600 hover:border-orangeone hover:text-orangeone disabled:opacity-40"><Glyph />{label}</button>;
-        })}
+      <summary className="cursor-pointer rounded-[10px] border border-dashed border-gray-300 px-3 py-2 text-center text-sm font-semibold text-bleuone">+ Ajouter un bloc</summary>
+      <div className="mt-2 rounded-[12px] border border-gray-200 bg-white p-3">
+        <div className="flex flex-wrap gap-2">
+          {Object.entries(BLOCK_LABELS).map(([type, label]) => {
+            const Glyph = BLOCK_GLYPHS[type];
+            return <button key={type} type="button" disabled={disabled} onClick={(event) => {
+              onAdd(type, index);
+              setChoixOutil(false);
+              event.currentTarget.closest('details').open = false;
+            }} className="flex items-center gap-2 rounded-[8px] border border-gray-300 px-3 py-2 text-sm font-semibold text-gray-600 hover:border-orangeone hover:text-orangeone disabled:opacity-40"><Glyph />{label}</button>;
+          })}
+          {outils.length > 0 && <button type="button" disabled={disabled} aria-expanded={choixOutil} onClick={() => setChoixOutil((ouvert) => !ouvert)}
+            className={`flex items-center gap-2 rounded-[8px] border px-3 py-2 text-sm font-semibold hover:border-orangeone hover:text-orangeone disabled:opacity-40 ${choixOutil ? 'border-orangeone text-orangeone' : 'border-gray-300 text-gray-600'}`}><OutilBlockGlyph />Outil</button>}
+        </div>
+        {choixOutil && <div className="mt-3 border-t border-gray-200 pt-3">
+          <p className="text-xs font-semibold text-gray-500">Quelle activité le stagiaire fera-t-il dans la leçon ?</p>
+          <div className="mt-2 grid gap-2 sm:grid-cols-2">
+            {outils.map((outil) => <button key={outil.cle} type="button" disabled={disabled} onClick={(event) => {
+              onAdd('outil', index, outil.cle);
+              setChoixOutil(false);
+              event.currentTarget.closest('details').open = false;
+            }} className="rounded-[8px] border border-gray-300 px-3 py-2 text-left hover:border-orangeone disabled:opacity-40">
+              <span className="block text-sm font-semibold text-bleuone">{outil.libelle}</span>
+              <span className="mt-0.5 block text-xs text-gray-600">{outil.description}</span>
+            </button>)}
+          </div>
+        </div>}
       </div>
     </details>
   );
@@ -837,7 +1130,8 @@ const LESSON_TEMPLATES = [
   ] },
 ];
 
-function LectureEditor({ lectureId, initialTitle, initialBlocks, updateUrl, uploadUrl, videoUploadUrl, audioUploadUrl, audioGenerateUrl, scormUploadUrl }) {
+function LectureEditor({ lectureId, initialTitle, initialBlocks, updateUrl, uploadUrl, videoUploadUrl, audioUploadUrl, audioGenerateUrl, scormUploadUrl, outils, zonesClic }) {
+  const outilsActifs = outils.filter((outil) => outil.actif);
   const [title, setTitle] = useState(initialTitle || '');
   const [blocks, setBlocks] = useState(() =>
     (initialBlocks || []).map((block) => ({ ...block, clientId: nextClientId() }))
@@ -846,6 +1140,9 @@ function LectureEditor({ lectureId, initialTitle, initialBlocks, updateUrl, uplo
   const [savedAt, setSavedAt] = useState('');
   const [removedBlock, setRemovedBlock] = useState(null);
   const dragIndexRef = useRef(null);
+  const listRef = useRef(null);
+  // Emplacement où tomberait le bloc glissé : 0 = avant le premier, blocks.length = après le dernier.
+  const [dropPosition, setDropPosition] = useState(null);
   const skipNextSaveRef = useRef(true);
   const saveRef = useRef(null);
   if (!saveRef.current) {
@@ -936,10 +1233,10 @@ function LectureEditor({ lectureId, initialTitle, initialBlocks, updateUrl, uplo
     if (panel) panel.hidden = blocks.length > 0;
   }, [blocks.length]);
 
-  const addBlock = (type, index) => setBlocks((prev) => {
+  const addBlock = (type, index, outil) => setBlocks((prev) => {
     if (prev.length >= 100) return prev;
     const next = [...prev];
-    next.splice(index, 0, createBlock(type));
+    next.splice(index, 0, createBlock(type, outil));
     return next;
   });
   const updateBlock = (index, updated) => setBlocks((prev) => prev.map((b, i) => (i === index ? updated : b)));
@@ -957,19 +1254,50 @@ function LectureEditor({ lectureId, initialTitle, initialBlocks, updateUrl, uplo
     });
   };
 
-  const handleDragStart = (index) => { dragIndexRef.current = index; };
-  const handleDragOver = () => {};
-  const handleDrop = (dropIndex) => {
-    const dragIndex = dragIndexRef.current;
+  const handleDragStart = (event, index) => {
+    dragIndexRef.current = index;
+    event.dataTransfer.effectAllowed = 'move';
+    // Firefox ne démarre un glisser-déposer que si des données sont attachées.
+    event.dataTransfer.setData('application/x-oneduc-bloc', String(index));
+  };
+  const handleDragEnd = () => {
     dragIndexRef.current = null;
-    if (dragIndex === null || dragIndex === dropIndex) return;
+    setDropPosition(null);
+  };
+  const handleDragOver = (event) => {
+    const dragIndex = dragIndexRef.current;
+    if (dragIndex === null) return;
+    event.preventDefault();
+
+    // Le bloc tombe avant le premier bloc dont le milieu est sous le pointeur, sinon à la fin.
+    const rows = Array.from(listRef.current.children).filter((row) => row.hasAttribute('data-block-row'));
+    let position = rows.findIndex((row) => {
+      const cadre = row.getBoundingClientRect();
+      return event.clientY < cadre.top + cadre.height / 2;
+    });
+    if (position === -1) position = rows.length;
+
+    // Juste avant ou juste après lui-même, le bloc ne bougerait pas : pas de ligne.
+    setDropPosition(position === dragIndex || position === dragIndex + 1 ? null : position);
+  };
+  const handleDrop = (event) => {
+    const dragIndex = dragIndexRef.current;
+    const position = dropPosition;
+    if (dragIndex === null) return;
+    event.preventDefault();
+    handleDragEnd();
+    if (position === null) return;
 
     setBlocks((prev) => {
       const next = [...prev];
       const [moved] = next.splice(dragIndex, 1);
-      next.splice(dropIndex, 0, moved);
+      next.splice(position > dragIndex ? position - 1 : position, 0, moved);
       return next;
     });
+  };
+  const dropIndicator = (index) => {
+    if (dropPosition === index) return 'avant';
+    return dropPosition === blocks.length && index === blocks.length - 1 ? 'apres' : null;
   };
 
   return (
@@ -1011,11 +1339,10 @@ function LectureEditor({ lectureId, initialTitle, initialBlocks, updateUrl, uplo
         }} className="rounded-[10px] border border-gray-300 bg-white px-3 py-2 text-sm font-semibold text-bleuone hover:border-orangeone">{template.label}</button>)}</div>
       </div>}
 
-      <InsertBlockMenu index={0} onAdd={addBlock} disabled={blocks.length >= 100} />
-      <div className="space-y-3">
+      <div ref={listRef} className="space-y-4" onDragOver={handleDragOver} onDrop={handleDrop} onDragEnd={handleDragEnd}>
         {blocks.map((block, index) => (
-          <React.Fragment key={block.clientId}>
           <BlockRow
+            key={block.clientId}
             block={block}
             index={index}
             total={blocks.length}
@@ -1023,22 +1350,22 @@ function LectureEditor({ lectureId, initialTitle, initialBlocks, updateUrl, uplo
             onChange={(updated) => updateBlock(index, updated)}
             onRemove={removeBlock}
             onDragStart={handleDragStart}
-            onDragOver={handleDragOver}
-            onDrop={handleDrop}
+            indicateur={dropIndicator(index)}
             uploadUrl={uploadUrl}
             videoUploadUrl={videoUploadUrl}
             audioUploadUrl={audioUploadUrl}
             audioGenerateUrl={audioGenerateUrl}
             scormUploadUrl={scormUploadUrl}
+            outils={outils}
+            zonesClic={zonesClic}
           />
-          <InsertBlockMenu index={index + 1} onAdd={addBlock} disabled={blocks.length >= 100} />
-          </React.Fragment>
         ))}
 
         {blocks.length === 0 && (
           <p className="text-xs text-gray-400">Aucun bloc pour le moment. Ajoutez-en un ci-dessous.</p>
         )}
       </div>
+      <InsertBlockMenu index={blocks.length} onAdd={addBlock} disabled={blocks.length >= 100} outils={outilsActifs} />
 
     </div>
   );
@@ -1066,6 +1393,21 @@ export function mountModuleBuilderEditors() {
       initialBlocks = [];
     }
 
+    let outils = [];
+    try {
+      outils = JSON.parse(container.dataset.outils || '[]');
+      if (!Array.isArray(outils)) outils = [];
+    } catch (e) {
+      outils = [];
+    }
+
+    let zonesClic = {};
+    try {
+      zonesClic = JSON.parse(container.dataset.zonesClic || '{}') || {};
+    } catch (e) {
+      zonesClic = {};
+    }
+
     createRoot(container).render(
       <LectureEditor
         lectureId={lectureId}
@@ -1077,6 +1419,8 @@ export function mountModuleBuilderEditors() {
         audioUploadUrl={audioUploadUrl}
         audioGenerateUrl={audioGenerateUrl}
         scormUploadUrl={scormUploadUrl}
+        outils={outils}
+        zonesClic={zonesClic}
       />
     );
   });
