@@ -94,6 +94,8 @@
                  data-audio-upload-url="{{ route($nomRoutesConstructeur.'.audios.store', $module) }}"
                  data-audio-generate-url="{{ route($nomRoutesConstructeur.'.lectures.generate-audio', $lecture) }}"
                  data-scorm-upload-url="{{ route($nomRoutesConstructeur.'.scorm.store', $module) }}"
+                 data-outils="{{ json_encode($outilsLecon ?? []) }}"
+                 data-zones-clic="{{ json_encode($zonesDeClic ?? []) }}"
                  data-initial-title="{{ $lecture->lecture_title }}"
                  data-initial-blocks="{{ json_encode($initialBlocks) }}"></div>
             @if(empty($initialBlocks))

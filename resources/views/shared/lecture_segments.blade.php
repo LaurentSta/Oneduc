@@ -1,15 +1,26 @@
 {{-- resources/views/shared/lecture_segments.blade.php --}}
-@php $segments = $segments ?? []; $lecture = $lecture ?? null; @endphp
+@php
+    $segments = $segments ?? [];
+    $lecture = $lecture ?? null;
+
+    // Une activité « outil » obligatoire retient le « Continuer » de son segment, comme une question.
+    $outilsRestants = array_map(
+        fn ($segment) => \App\Domains\ModulesFormateur\Support\OutilsLecon::nombreObligatoires($segment['blocks'] ?? []),
+        $segments
+    );
+@endphp
 
 @if(count($segments) > 1)
     <div x-data="{
             revealed: @js(array_merge([true], array_fill(0, count($segments) - 1, false))),
-            answered: @js(array_map(fn ($segment) => ($segment['kind'] ?? 'content') !== 'quiz', $segments)),
+            answered: @js(array_map(fn ($segment, $restants) => ($segment['kind'] ?? 'content') !== 'quiz' && $restants === 0, $segments, $outilsRestants)),
+            outilsRestants: @js($outilsRestants),
          }">
         @foreach($segments as $segIndex => $segment)
             {{-- The background bleeds full-width of the scroll pane; the text inside
                  stays constrained to the usual reading column. --}}
             <div x-show="revealed[{{ $segIndex }}]"
+                 @outil-termine="outilsRestants[{{ $segIndex }}]--; if (outilsRestants[{{ $segIndex }}] <= 0) answered[{{ $segIndex }}] = true"
                  @if($segIndex > 0)
                      x-cloak
                      class="transform-gpu will-change-transform bg-gray-50"

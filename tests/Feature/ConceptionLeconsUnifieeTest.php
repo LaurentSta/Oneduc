@@ -1,16 +1,21 @@
 <?php
 
+use App\Jobs\ConvertLectureSlides;
 use App\Models\Category;
 use App\Models\Competency;
+use App\Models\ComponentFinderActivity;
 use App\Models\ContentBlockScormScore;
 use App\Models\LessonResource;
 use App\Models\Module;
+use App\Models\OutilEtat;
 use App\Models\Progression;
 use App\Models\QuizAttempt;
 use App\Models\QuizQuestion;
 use App\Models\SubCategory;
 use App\Models\User;
 use App\Services\Scorm\ScormImporter;
+use App\Support\LearningAssetPath;
+use App\Support\Outils\EtatsOutils;
 use Illuminate\Http\UploadedFile;
 use Illuminate\Support\Facades\Queue;
 use Illuminate\Support\Facades\Storage;
@@ -155,7 +160,7 @@ it('importe une présentation dans une leçon vide sans écraser des blocs exist
     $this->post($url, ['support_type' => 'slides', 'support_file' => $fichier])->assertRedirect()->assertSessionHasNoErrors();
     expect($lecon->fresh()->content_type)->toBe('slides')->and($lecon->fresh()->slides_status)->toBe('pending');
     Storage::disk('local')->assertExists($lecon->fresh()->slides_source_path);
-    Queue::assertPushed(App\Jobs\ConvertLectureSlides::class);
+    Queue::assertPushed(ConvertLectureSlides::class);
     $this->postJson($url, ['support_type' => 'slides', 'support_file' => $fichier])->assertUnprocessable();
 })->with(['admin', 'formateur']);
 
@@ -164,7 +169,7 @@ it('importe le SCORM dans un nouvel emplacement pour conserver le paquet source'
     $lecon->update(['content_type' => 'scorm', 'scorm_path' => 'modules/source/index.html']);
     $this->mock(ScormImporter::class, function ($mock) use ($lecon) {
         $mock->shouldReceive('importToFolder')->once()->withArgs(function ($fichier, $dossier) use ($lecon) {
-            return $fichier instanceof UploadedFile && str_starts_with($dossier, App\Support\LearningAssetPath::lessonImportFolder($lecon->id).'/import_');
+            return $fichier instanceof UploadedFile && str_starts_with($dossier, LearningAssetPath::lessonImportFolder($lecon->id).'/import_');
         })->andReturn((object) ['relative_index_path' => 'modules/nouveau/index.html', 'package_id' => null, 'version_id' => null]);
     });
     $this->actingAs($utilisateur)->post(route($routes.'.lectures.support.store', $lecon), [
@@ -188,4 +193,96 @@ it('gère les ressources du brouillon admin en empêchant toute modification d�
     expect(LessonResource::whereKey($ressource->id)->exists())->toBeTrue();
     $this->delete(route($routes.'.lectures.ressources.destroy', ['lecture' => $lecon, 'resource' => $ressource]))->assertRedirect();
     Storage::disk('public')->assertMissing($ressource->file_path);
+});
+
+it('enregistre une activité outil dans la leçon en nettoyant son contenu', function ($role) {
+    [$utilisateur, , , $lecon, $routes] = contexteConceptionUnifiee($role);
+
+    $this->actingAs($utilisateur)->putJson(route($routes.'.lectures.update', $lecon), [
+        'lecture_title' => $lecon->lecture_title,
+        'content_blocks' => json_encode([
+            ['type' => 'outil', 'outil' => 'cartes-retourner', 'obligatoire' => 'true', 'group_id' => 7, 'configuration' => [
+                'titre' => 'Vocabulaire', 'access_code' => 'ABC123',
+                'cartes' => [
+                    ['recto' => 'La balise <b>', 'verso' => 'Met le texte en gras', 'image' => 'x'],
+                    ['recto' => '  ', 'verso' => ''],
+                    'pas une carte',
+                ],
+            ]],
+            ['type' => 'outil', 'outil' => 'buzzer', 'configuration' => ['titre' => 'Outil non intégrable']],
+            ['type' => 'outil', 'outil' => 'vrai-faux', 'configuration' => ['affirmations' => []]],
+        ]),
+    ])->assertOk();
+
+    expect($lecon->fresh()->content_blocks)->toEqual([[
+        'type' => 'outil', 'outil' => 'cartes-retourner',
+        'configuration' => ['titre' => 'Vocabulaire', 'consigne' => '', 'cartes' => [['recto' => 'La balise <b>', 'verso' => 'Met le texte en gras']]],
+        'obligatoire' => true,
+    ]]);
+})->with(['admin', 'formateur']);
+
+it('affiche l’activité outil au stagiaire, la compte comme étape obligatoire et la masque si l’outil est désactivé', function () {
+    [$utilisateur, $module, $chapitre, $lecon, $routes] = contexteConceptionUnifiee('formateur');
+    $lecon->update(['content_blocks' => [[
+        'type' => 'outil', 'outil' => 'vrai-faux', 'obligatoire' => true,
+        'configuration' => ['titre' => 'Mots de passe', 'consigne' => '', 'affirmations' => [
+            ['texte' => 'Un mot de passe court suffit.', 'reponse' => false, 'explication' => 'Visez douze caractères.'],
+            ['texte' => '', 'reponse' => true, 'explication' => 'Affirmation encore incomplète.'],
+        ]],
+    ]]]);
+    $apercu = route($routes.'.preview', ['module' => $module, 'section' => $chapitre->id, 'lecture' => $lecon->id]);
+
+    $this->actingAs($utilisateur)->get($apercu)->assertOk()
+        ->assertSee('Un mot de passe court suffit.')->assertSee('Visez douze caractères.')
+        ->assertDontSee('Affirmation encore incomplète.')
+        ->assertSee('outilsRestants: 1', false);
+
+    OutilEtat::updateOrCreate(['cle' => 'vraifaux'], ['actif' => false]);
+    EtatsOutils::viderCache();
+
+    // Désactivé par l'admin : ni affiché, ni bloquant pour la suite de la leçon.
+    $this->get($apercu)->assertOk()
+        ->assertDontSee('Un mot de passe court suffit.')
+        ->assertSee('outilsRestants: 0', false);
+});
+
+it('relie la leçon à une zone de clic de la bibliothèque : modifiée dans l’outil, elle l’est dans la leçon', function () {
+    [$utilisateur, $module, $chapitre, $lecon, $routes] = contexteConceptionUnifiee('formateur');
+    $zones = [
+        ['label' => 'Processeur', 'description' => 'Le cerveau de la machine.', 'shape' => 'circle', 'x' => 10, 'y' => 20, 'w' => 30, 'h' => 15],
+        ['label' => 'Mémoire', 'description' => '', 'shape' => 'square', 'x' => 50, 'y' => 20, 'w' => 20, 'h' => 10],
+    ];
+    $zoneDeClic = ComponentFinderActivity::create(['formateur_id' => $utilisateur->id, 'title' => 'Carte mère', 'image_path' => 'component_finder/abc123.png', 'zones' => $zones]);
+    $celleDUnCollegue = ComponentFinderActivity::create(['formateur_id' => User::factory()->create(['role' => 'formateur'])->id, 'title' => 'Autre', 'image_path' => 'component_finder/def456.png', 'zones' => $zones]);
+
+    $this->actingAs($utilisateur)->putJson(route($routes.'.lectures.update', $lecon), [
+        'lecture_title' => $lecon->lecture_title,
+        'content_blocks' => json_encode([
+            ['type' => 'outil', 'outil' => 'composants', 'activite_id' => $zoneDeClic->id, 'obligatoire' => true, 'configuration' => ['zones' => $zones], 'activite' => ['titre' => 'x']],
+            ['type' => 'outil', 'outil' => 'composants', 'activite_id' => $celleDUnCollegue->id],
+            ['type' => 'outil', 'outil' => 'composants', 'activite_id' => null],
+        ]),
+    ])->assertOk();
+
+    // Le bloc ne garde qu'un lien, et seulement vers une zone de clic du concepteur.
+    expect($lecon->fresh()->content_blocks)->toEqual([
+        ['type' => 'outil', 'outil' => 'composants', 'activite_id' => $zoneDeClic->id, 'obligatoire' => true],
+    ]);
+
+    $apercu = route($routes.'.preview', ['module' => $module, 'section' => $chapitre->id, 'lecture' => $lecon->id]);
+    $this->get($apercu)->assertOk()
+        ->assertSee('Processeur')->assertSee('Agrandir')
+        ->assertSee('aria-label="Aide"', false)->assertSee('@click="open = true"', false)
+        ->assertDontSee('Carte mère')
+        ->assertSee('/media/storage/component_finder/abc123.png', false)
+        ->assertSee('outilsRestants: 1', false);
+
+    $zones[0]['label'] = 'Microprocesseur';
+    $this->put(route('formateur.composants.activities.update', $zoneDeClic), ['title' => 'Carte mère', 'zones' => json_encode($zones)])->assertRedirect();
+    $this->get($apercu)->assertOk()->assertSee('Microprocesseur')->assertDontSee('Processeur');
+
+    // Tant qu'une leçon l'utilise, la zone de clic ne peut pas être supprimée.
+    $this->get(route('formateur.composants.index'))->assertOk()->assertSee('Utilisée dans 1 leçon')->assertSee($lecon->lecture_title);
+    $this->delete(route('formateur.composants.activities.destroy', $zoneDeClic))->assertSessionHasErrors('activity');
+    expect($zoneDeClic->fresh())->not->toBeNull();
 });

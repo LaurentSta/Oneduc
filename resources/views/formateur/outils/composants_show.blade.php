@@ -59,6 +59,9 @@
               <p class="text-sm font-semibold text-gray-700">{{ $stat['label'] }}</p>
               <p class="text-xs text-gray-500">{{ $stat['correct'] }}/{{ $stat['total'] }} - {{ $stat['percent'] }}%</p>
             </div>
+            @if($stat['description'] !== '')
+              <p class="mb-2 text-xs text-gray-500 whitespace-pre-line">{{ $stat['description'] }}</p>
+            @endif
             <div class="h-2 rounded-full bg-gray-200 overflow-hidden">
               <div class="h-full bg-orangeone" style="width: {{ $stat['percent'] }}%"></div>
             </div>

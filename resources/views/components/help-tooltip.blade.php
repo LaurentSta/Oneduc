@@ -1,4 +1,4 @@
-@props(['message'])
+@props(['message', 'align' => 'center'])
 
 <div x-data="{ open: false }" class="relative inline-flex" @click.outside="open = false">
     <button type="button"
@@ -17,7 +17,7 @@
          x-transition:leave="transition ease-in duration-150"
          x-transition:leave-start="opacity-100 scale-100"
          x-transition:leave-end="opacity-0 scale-95"
-         class="absolute left-1/2 top-full z-20 mt-2 w-64 -translate-x-1/2 rounded-xl border border-slate-200 bg-slate-900 px-3 py-2 text-[11px] leading-relaxed text-white shadow-xl">
+         class="absolute top-full z-20 mt-2 w-64 rounded-xl border border-slate-200 bg-slate-900 px-3 py-2 text-[11px] leading-relaxed text-white shadow-xl {{ $align === 'right' ? 'right-0' : 'left-1/2 -translate-x-1/2' }}">
         {{ $message }}
     </div>
 </div>

@@ -193,7 +193,8 @@ Le builder formateur sauvegarde les leçons en `content_blocks`. Les blocs accep
 - `video` : URL YouTube/Vimeo/fichier direct (voir ci-dessous) ;
 - `quote` ;
 - `divider` ;
-- `scorm` : package SCORM importé, isolé du reste de la leçon (voir « SCORM en tant que bloc de leçon » plus bas).
+- `scorm` : package SCORM importé, isolé du reste de la leçon (voir « SCORM en tant que bloc de leçon » plus bas) ;
+- `outil` : outil d'animation joué par le stagiaire en autonomie dans la leçon (voir « Outil en tant que bloc de leçon » plus bas).
 
 Il n'y a pas de bloc `list` séparé — les listes se font uniquement via le bloc `text` (boutons dédiés dans la barre d'outils TipTap). Ce bloc a existé un temps comme type à part entière avant d'être retiré au profit de la liste intégrée au texte.
 
@@ -237,6 +238,44 @@ Dans `API.js`, `envoyerProgression()` poste vers `/scorm/save-block-progress` (`
 Sécurité : `content_block_key` est généré côté client (`crypto.randomUUID()`, avec repli si non disponible) et validé côté serveur (`^[A-Za-z0-9_-]{8,64}$`) avant de servir de nom de dossier. `NettoyeurBlocsModule` revérifie, à chaque sauvegarde, que le `ScormPackageVersion` référencé par le bloc a bien été importé dans le dossier attendu pour ce module+clé (`ScormPackageVersion.folder`), ce qui sert de preuve de propriété sans table de correspondance supplémentaire.
 
 Duplication : `DupliquerLecon` régénère une nouvelle `content_block_key` et vide `scorm_package_version_id` pour chaque bloc `scorm` de la copie — sans ça, l'originale et la copie partageraient le même dossier/package, et un réimport sur l'une écraserait l'autre. La leçon dupliquée affiche donc des blocs SCORM « vides » à réimporter.
+
+#### Outil en tant que bloc de leçon
+
+Le bouton « Outil » du menu « + Ajouter un bloc » (un seul menu, en bas de la liste des blocs ; un bloc ajouté se replace ensuite avec les flèches ↑ ↓ ou par glisser-déposer, une ligne orange indiquant où il sera déposé) pose dans la leçon une activité que le stagiaire fait seul, à son rythme : pas de session de groupe, pas de code d'accès, pas de formateur aux commandes. C'est un usage distinct de l'outil « en direct » de la page Outils numériques, qui reste inchangé.
+
+Outils intégrables aujourd'hui : **Cartes à retourner**, **Vrai ou Faux** et **Trouve le composant** (zone de clic). La liste vit dans `App\Domains\ModulesFormateur\Support\OutilsLecon` ; en ajouter un demande une entrée dans sa constante `OUTILS`, un nettoyage dans `nettoyer()`, un formulaire dans l'éditeur (`OUTIL_CONFIGURATIONS` + composant dédié) et un partial dans `resources/views/shared/lecture_outils/`.
+
+Forme du bloc, entièrement contenue dans `content_blocks` (aucune table dédiée) :
+
+```json
+{
+  "type": "outil",
+  "outil": "cartes-retourner",
+  "configuration": { "titre": "", "consigne": "", "cartes": [{ "recto": "", "verso": "" }] },
+  "obligatoire": false
+}
+```
+
+Pour `vrai-faux`, `configuration.affirmations` contient des `{ texte, reponse, explication }`. Les clés d'outil et la forme de `configuration` reprennent celles de `RegistreOutilsParcours`, avec `explication` en plus pour Vrai ou Faux (le stagiaire étant seul, c'est elle qui tient lieu de débrief).
+
+**Outil lié (Zone de clic).** Pour `composants`, le bloc ne contient pas le contenu mais un lien vers la bibliothèque du formateur :
+
+```json
+{ "type": "outil", "outil": "composants", "activite_id": 12, "obligatoire": false }
+```
+
+- `activite_id` désigne une `ComponentFinderActivity` (voir [Zone de clic](outils/zone-de-clic.md)). La leçon affiche l'activité telle qu'elle est au moment de la lecture : la modifier dans l'outil la modifie dans toutes les leçons. Titre et image viennent de l'activité, la consigne est celle par défaut de l'outil.
+- À l'enregistrement, `OutilsLecon::nettoyer()` n'accepte qu'une activité du concepteur connecté, ou une activité déjà référencée dans la même formation (formation reprise d'un collègue : le lien est conservé, en lecture seule pour lui).
+- Une activité utilisée dans une leçon ne peut pas être supprimée (`OutilsLecon::usages()`). Si elle disparaît malgré tout (compte supprimé), le bloc n'est plus affiché aux stagiaires et l'éditeur demande d'en choisir une autre.
+- Affichage épuré côté stagiaire (`shared/lecture_outil.blade.php`, variable `$epure`) : ni nom d'outil, ni titre de l'activité, ni consigne affichée. Il ne reste que la question (« Trouvez : … »), l'avancement, un « ? » (`x-help-tooltip`) qui donne la consigne au survol, au focus ou au toucher, et un bouton « Agrandir » qui rejoue le même plateau en pleine page (`_composants_plateau.blade.php`, rendu deux fois sur le même état Alpine).
+- C'est le modèle retenu le 10 octobre 2026 pour tous les outils de contenu (« je crée une fois, j'utilise partout »). Cartes à retourner et Vrai ou Faux sont encore saisis dans le bloc, en attendant leur bibliothèque.
+- Les blocs posés le 10 octobre 2026 avant ce changement portaient une copie (`configuration.image` et `zones`) : `OutilsLecon::activiteId()` les rattache à leur zone de clic d'origine par le nom de l'image, et ils sont réécrits au format lié à la prochaine sauvegarde de la leçon.
+
+- **Le contenu suit la leçon** (outils saisis dans le bloc) : comme il est dans le bloc, il est copié tel quel par la duplication de leçon et par les versions du catalogue. Pour un outil lié, c'est le lien qui est copié : la copie pointe vers la même activité.
+- **Marche/arrêt admin** : seuls les outils activés dans `/admin/outils` (`EtatsOutils`) sont proposés dans le sélecteur. Si un outil est désactivé après coup, ses blocs restent modifiables dans l'éditeur (avec un avertissement) mais ne sont plus affichés aux stagiaires.
+- **Nettoyage** : texte brut limité en longueur, clés inconnues écartées, 100 cartes ou 50 affirmations au plus. Les éléments incomplets sont conservés à l'enregistrement (saisie en cours) et simplement écartés à l'affichage (`OutilsLecon::elements()`). Pas de `strip_tags` : « `<b>` » est un contenu légitime, l'échappement se fait à l'affichage.
+- **« À terminer avant de continuer »** (`obligatoire`) : l'activité retient le bouton « Continuer » de son segment et le bouton de fin de leçon, par le même mécanisme que les « Petites questions » (`shared/lecture_segments.blade.php`, store Alpine `lectureProgress`). Une carte compte quand elle a été retournée une fois, une affirmation quand elle a reçu une réponse. Un outil désactivé ou sans élément complet ne bloque jamais.
+- **Pas de suivi enregistré** : comme pour les « Petites questions », rien n'est persisté ; à chaque visite l'activité repart de zéro.
 
 ### Personnalisation par groupe
 
