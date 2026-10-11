@@ -17,6 +17,9 @@ Tout le wiki n'est pas à lire par tout le monde. Voici les parcours conseillés
 **Partenaire ou financeur** — vous voulez situer le projet :
 [Présentation](01-presentation.md) et [Roadmap](11-roadmap.md) suffisent.
 
+**Responsable produit ou projet** — vous voulez construire ou réviser le cahier des charges :
+[Dossier de cadrage produit et technique](../cahier-des-charges/README.md) → PRD → App Flow → UI/UX Design → TRD → Backend Schema → Implementation Plan.
+
 **Administrateur système** :
 [Installation](02-installation.md) → [Sécurité & RGPD](10-securite-rgpd.md).
 
@@ -47,6 +50,22 @@ Chaque page indique en tête son public visé. Les pages mixtes regroupent la pa
 | 17 | [Audit site du 14 juillet 2026](17-audit-site-2026-07-14.md) | Suivi de l'audit du 5 juillet, faille d'accès module corrigée, crawl public 100% sain |
 | 18 | [Accessibilité et démarche RGAA](18-accessibilite-rgaa.md) | Déclaration publique, schéma 2026-2028, plan 2026 et règles de suivi |
 | 19 | [Sécurité et préparation du déploiement](19-securite-deploiement.md) | Correctifs CSRF, dépendances, CI, contrôles de production, sauvegarde et retour arrière |
+| 20 | [Cahier des charges produit et technique](../cahier-des-charges/README.md) | Comparatif, PRD, TRD, App Flow, UI/UX Design, Backend Schema et plan de réalisation |
+
+---
+
+## Cahier des charges produit et technique
+
+Le [dossier de cadrage](../cahier-des-charges/README.md) compare l'existant aux livrables attendus et propose un ordre de construction. Les documents sont des trames préremplies à valider avec les parties prenantes.
+
+| Livrable | Rôle |
+|---|---|
+| [PRD](../cahier-des-charges/01-prd.md) | Besoins, publics, périmètre et critères d'acceptation |
+| [TRD](../cahier-des-charges/02-trd.md) | Architecture, contraintes et exigences techniques |
+| [App Flow](../cahier-des-charges/03-app-flow.md) | Parcours utilisateurs, décisions et erreurs |
+| [UI/UX Design](../cahier-des-charges/04-ui-ux-design.md) | Expérience, interfaces et accessibilité |
+| [Backend Schema](../cahier-des-charges/05-backend-schema.md) | Données, relations, droits et contrats serveur |
+| [Implementation Plan](../cahier-des-charges/06-implementation-plan.md) | Lots, dépendances et preuves de validation |
 
 ---
 
@@ -88,6 +107,7 @@ Fichiers légaux à la racine du projet :
 
 ## Autres ressources du dossier `docs/`
 
+- [Dossier de cadrage produit et technique](../cahier-des-charges/README.md) — comparatif et trames reliées pour le PRD, le TRD, l'App Flow, l'UI/UX Design, le Backend Schema et l'Implementation Plan
 - [Parcours formateur Oneduc](../parcours-formateur.md) — structure de l'onboarding formateur (5 modules)
 - [Idées d'outils formateurs](../idees-outils-formateurs.md) — pistes produit (OF-001 à OF-013)
 
@@ -108,4 +128,4 @@ Analyse réalisée le **14 juillet 2026** depuis `/var/www/Oneduc_Dev` (voir [Au
 
 ---
 
-*Dernière mise à jour : 14 juillet 2026 — Version locale vérifiée : Laravel 11.42.0, PHP 8.3.6, Tailwind CSS v4, React 19 pour certains écrans riches*
+*Dernière mise à jour documentaire : 11 octobre 2026 (ajout du cahier des charges). Les résultats applicatifs ci-dessus sont ceux de l'audit du 14 juillet 2026.*
